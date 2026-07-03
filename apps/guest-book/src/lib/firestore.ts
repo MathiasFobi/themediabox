@@ -20,10 +20,6 @@ function docUrl(projectId: string, id: string): string {
   return `${base(projectId)}/guests/${id}`;
 }
 
-function collUrl(projectId: string): string {
-  return `${base(projectId)}/guests`;
-}
-
 interface FetchOpts {
   method?: string;
   body?: unknown;
@@ -112,33 +108,41 @@ export async function listGuests(
     idToken?: string;
   } = {}
 ): Promise<GuestBook[]> {
-  const params = new URLSearchParams();
-  if (opts.status) {
-    params.set(
-      "where",
-      JSON.stringify({
-        fieldFilter: {
-          field: { fieldPath: "status" },
-          op: "EQUAL",
-          value: { stringValue: opts.status },
-        },
-      })
-    );
-  }
-  params.set("pageSize", String(opts.limit ?? 50));
-
-  const url = `${collUrl(projectId)}?${params.toString()}`;
+  // Firestore REST API: structured queries (filter + sort + pageSize) require
+  // POST /documents:runQuery with a RunQueryRequest body. The GET /documents
+  // endpoint only supports simple "from"/"pageSize" — no filters.
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: "guests" }],
+      where: opts.status
+        ? {
+            fieldFilter: {
+              field: { fieldPath: "status" },
+              op: "EQUAL",
+              value: { stringValue: opts.status },
+            },
+          }
+        : undefined,
+      orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
+      limit: opts.limit ?? 50,
+    },
+  };
   const res = await fdocs(url, env, {
+    method: "POST",
     idToken: opts.idToken,
     useAdmin: opts.useAdmin,
+    body,
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Firestore list failed: ${res.status} ${text}`);
   }
-  const json = (await res.json()) as { documents?: FirestoreDoc[] };
-  const docs = json.documents ?? [];
-  return docs.map(docToGuest);
+  // runQuery returns an array of { document?: { fields: ... }, readTime: ... }
+  const rows = (await res.json()) as Array<{ document?: FirestoreDoc }>;
+  return rows
+    .filter((r) => r.document)
+    .map((r) => docToGuest(r.document!));
 }
 
 export async function updateGuestStatus(
