@@ -114,7 +114,8 @@ app.post("/api/admin/login", async (c) => {
   try {
     claims = await verifyFirebaseIdToken(body.idToken, PROJECT_ID);
   } catch (e) {
-    return err("Invalid ID token", 401);
+    console.error("admin login: token verification failed", e);
+    return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
   }
   if (!claims.email_verified) return err("Email not verified", 403);
   if (claims.email.toLowerCase() !== c.env.OWNER_EMAIL.toLowerCase()) {
