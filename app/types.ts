@@ -6,6 +6,11 @@ export type Product = {
   shortDescription: string;
   longDescription: string;
   image: string;
+  images?: {
+    hero: string;
+    product: string;
+    lifestyle: string;
+  };
   emoji: string;
   tag: string;
   paypalBase: string;

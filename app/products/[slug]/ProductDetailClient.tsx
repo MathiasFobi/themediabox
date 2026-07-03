@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "../../types";
 import { OCCASION_GRADIENTS } from "../../types";
@@ -12,6 +13,10 @@ const allProducts = products as unknown as Product[];
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const [paypalProduct, setPaypalProduct] = useState<Product | null>(null);
+  const gallery = product.images
+    ? [product.images.hero, product.images.product, product.images.lifestyle]
+    : [product.image];
+  const [activeImage, setActiveImage] = useState(0);
 
   const primaryOccasion = product.occasions[0];
   const gradient = primaryOccasion
@@ -38,17 +43,44 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
         <div className="animate-fade-up">
-          <div className={`relative aspect-square bg-gradient-to-br ${gradient} rounded-3xl flex items-center justify-center overflow-hidden glass-panel gold-border`}>
-            <div className="absolute inset-0 pattern-overlay opacity-50" />
-            <div className="relative text-[14rem] sm:text-[18rem] leading-none">
-              {product.emoji}
-            </div>
+          <div className={`relative aspect-square bg-gradient-to-br ${gradient} rounded-3xl overflow-hidden glass-panel gold-border`}>
+            <Image
+              src={gallery[activeImage]}
+              alt={product.title}
+              fill
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+              priority
+            />
             {product.tag && (
-              <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-text-primary/90 backdrop-blur-sm text-bg-base text-xs font-bold uppercase tracking-wider">
+              <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-text-primary/90 backdrop-blur-sm text-bg-base text-xs font-bold uppercase tracking-wider z-10">
                 {product.tag}
               </div>
             )}
           </div>
+          {gallery.length > 1 && (
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              {gallery.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition ${
+                    activeImage === i ? "border-gold" : "border-border-glass hover:border-gold/50"
+                  }`}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${product.title} view ${i + 1}`}
+                    fill
+                    sizes="(min-width: 1024px) 16vw, 33vw"
+                    className="object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>

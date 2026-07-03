@@ -75,33 +75,27 @@ export default function Home() {
             <div className="lg:col-span-5 animate-fade-up" style={{ animationDelay: "120ms" }}>
               <div className="relative">
                 <div className="absolute -inset-4 bg-gradient-to-br from-gold/30 via-terracotta/20 to-emerald-deep/20 rounded-3xl blur-2xl" />
-                <div className="relative glass-panel p-8 gold-border">
-                  <div className="text-7xl mb-4 text-center">🎥</div>
-                  <h3 className="font-display font-bold text-2xl text-text-primary text-center mb-2">
-                    Video Guest Book
-                  </h3>
-                  <p className="text-text-secondary text-center mb-6">
-                    From <span className="font-display font-bold text-gold-deep text-2xl">$25</span> · 5 Pack
-                  </p>
-                  <div className="space-y-3">
-                    {[
-                      "QR code scan, no app needed",
-                      "Weddings, graduations, sweet 16s",
-                      "Every message in one place",
-                      "Premium gold-accented display",
-                    ].map((f, i) => (
-                      <div key={i} className="flex items-start gap-2 text-sm text-text-secondary">
-                        <span className="text-gold mt-0.5">✦</span>
-                        <span>{f}</span>
+                <div className="relative glass-panel p-3 gold-border overflow-hidden">
+                  <div className="relative aspect-square rounded-2xl overflow-hidden">
+                    <img
+                      src="/products/video-guest-book-display-lifestyle.png"
+                      alt="Video Guest Book Display at a wedding reception"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-3 left-3 right-3 glass-card p-4">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div>
+                          <div className="font-display font-bold text-base text-text-primary">
+                            Video Guest Book
+                          </div>
+                          <div className="text-text-tertiary text-xs">From 5 Pack</div>
+                        </div>
+                        <div className="font-display font-bold text-2xl text-gold-deep tabular-nums">
+                          $25
+                        </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                  <Link
-                    href="/products/video-guest-book-display"
-                    className="btn-primary w-full justify-center mt-6"
-                  >
-                    Shop the Video Guest Book →
-                  </Link>
                 </div>
               </div>
             </div>

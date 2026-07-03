@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { Product } from "../types";
 import { OCCASION_GRADIENTS } from "../types";
 
@@ -18,20 +19,19 @@ export function ProductCard({
 
   return (
     <div className="glass-card overflow-hidden group h-full flex flex-col">
-      <Link href={`/products/${product.slug}`} className="block">
-        <div
-          className={`relative aspect-[4/3] bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden`}
-        >
-          <div className="absolute inset-0 pattern-overlay opacity-50" />
-          <div className="relative text-7xl group-hover:scale-110 transition-transform duration-500">
-            {product.emoji}
+      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/3] overflow-hidden">
+        <Image
+          src={product.image}
+          alt={product.title}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-700"
+        />
+        {product.tag && (
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-text-primary/90 backdrop-blur-sm text-bg-base text-[10px] font-bold uppercase tracking-wider z-10">
+            {product.tag}
           </div>
-          {product.tag && (
-            <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-text-primary/90 backdrop-blur-sm text-bg-base text-[10px] font-bold uppercase tracking-wider">
-              {product.tag}
-            </div>
-          )}
-        </div>
+        )}
       </Link>
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-2">

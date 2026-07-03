@@ -6,7 +6,12 @@
     "category": "video-displays",
     "shortDescription": "Capture love in real time. Guests scan, record, no app needed.",
     "longDescription": "A modern upgrade from the traditional guest book. Place the display at each table, guests scan the QR code with their phone, and record a personal video message — no app download, no friction. Every message lives in one place, ready to relive forever. Perfect for weddings, graduations, sweet 16s, quinceañeras, baby showers, retirement parties, and Kwanzaa gatherings.",
-    "image": "/products/video-display.svg",
+    "image": "/products/video-guest-book-display-hero.png",
+    "images": {
+      "hero": "/products/video-guest-book-display-hero.png",
+      "product": "/products/video-guest-book-display-product.png",
+      "lifestyle": "/products/video-guest-book-display-lifestyle.png"
+    },
     "emoji": "🎥",
     "tag": "Best Seller",
     "paypalBase": "https://paypal.me/themediabox/25",
@@ -32,7 +37,12 @@
     "category": "voice-magnets",
     "shortDescription": "Memorial photo, voice, and video keepsake that lasts forever.",
     "longDescription": "Honor the ones you love with a custom fridge magnet that holds their photo, voice, and a video message. Scan the QR code on the back to hear their laugh, their wisdom, their 'I love you.' A daily reminder on the fridge, a memory that never fades. Perfect for memorials, grandparents, family history, and legacy gifts.",
-    "image": "/products/voice-magnet.svg",
+    "image": "/products/forever-voice-magnet-hero.png",
+    "images": {
+      "hero": "/products/forever-voice-magnet-hero.png",
+      "product": "/products/forever-voice-magnet-product.png",
+      "lifestyle": "/products/forever-voice-magnet-lifestyle.png"
+    },
     "emoji": "🎙️",
     "tag": "Heirloom",
     "paypalBase": "https://paypal.me/themediabox/32.95",
@@ -48,7 +58,12 @@
     "category": "photo-booth",
     "shortDescription": "Personalized props with your face, theme, and party style.",
     "longDescription": "Ten custom photo booth props, designed around your face, your age, your theme. From sweet 16 to retirement, the props are YOU. Make every picture a moment, every moment a memory. High-quality cardstock, vivid color, ships fast.",
-    "image": "/products/photo-booth-props.svg",
+    "image": "/products/custom-photo-booth-props-hero.png",
+    "images": {
+      "hero": "/products/custom-photo-booth-props-hero.png",
+      "product": "/products/custom-photo-booth-props-product.png",
+      "lifestyle": "/products/custom-photo-booth-props-lifestyle.png"
+    },
     "emoji": "📸",
     "tag": "Crowd Favorite",
     "paypalBase": "https://paypal.me/themediabox/49.75",
@@ -64,7 +79,12 @@
     "category": "photo-booth",
     "shortDescription": "Props built for the birthday star — your face, your age, your vibe.",
     "longDescription": "The birthday is yours. The props should be too. Custom-designed around the guest of honor's face, age, and style — from 'Sweet 16' to '50 & Fabulous' to '80 and Still the Life of the Party.' Ten props, one unforgettable night.",
-    "image": "/products/birthday-props.svg",
+    "image": "/products/custom-birthday-props-hero.png",
+    "images": {
+      "hero": "/products/custom-birthday-props-hero.png",
+      "product": "/products/custom-birthday-props-product.png",
+      "lifestyle": "/products/custom-birthday-props-lifestyle.png"
+    },
     "emoji": "🎂",
     "tag": "Personal",
     "paypalBase": "https://paypal.me/themediabox/49.75",
@@ -80,7 +100,12 @@
     "category": "standees",
     "shortDescription": "Life-size standee of the graduate. Perfect for the party entrance.",
     "longDescription": "A life-size standee of the graduate, framed in gold. Place it at the entrance, the photo booth, the gift table — every picture becomes a portrait. Customize with their name, school, year, and a message. A centerpiece that turns a party into a milestone.",
-    "image": "/products/graduation-standee.svg",
+    "image": "/products/graduation-frame-standee-hero.png",
+    "images": {
+      "hero": "/products/graduation-frame-standee-hero.png",
+      "product": "/products/graduation-frame-standee-product.png",
+      "lifestyle": "/products/graduation-frame-standee-lifestyle.png"
+    },
     "emoji": "🎓",
     "tag": "Milestone",
     "paypalBase": "https://paypal.me/themediabox/35",
@@ -96,7 +121,12 @@
     "category": "albums",
     "shortDescription": "Custom hardcover album with QR codes linking to all your video messages.",
     "longDescription": "A custom hardcover wedding album, printed on premium paper, with QR codes embedded on every page. Scan to replay every video message from your video guest book, every toast, every moment you almost forgot. The wedding, preserved forever — photo, video, and love.",
-    "image": "/products/wedding-album.svg",
+    "image": "/products/wedding-memory-album-hero.png",
+    "images": {
+      "hero": "/products/wedding-memory-album-hero.png",
+      "product": "/products/wedding-memory-album-product.png",
+      "lifestyle": "/products/wedding-memory-album-lifestyle.png"
+    },
     "emoji": "📖",
     "tag": "Heirloom",
     "paypalBase": "https://paypal.me/themediabox/75",
@@ -112,7 +142,12 @@
     "category": "keepsakes",
     "shortDescription": "Hand-wrapped kente cloth box for the moments that matter most.",
     "longDescription": "A hand-wrapped kente cloth keepsake box, large enough for cards, jewelry, and small mementos. Inscribed with the name of the occasion — a wedding, a graduation, a quinceañera, the passing of a loved one. The first heirloom of a new chapter.",
-    "image": "/products/kente-box.svg",
+    "image": "/products/kente-keepsake-box-hero.png",
+    "images": {
+      "hero": "/products/kente-keepsake-box-hero.png",
+      "product": "/products/kente-keepsake-box-product.png",
+      "lifestyle": "/products/kente-keepsake-box-lifestyle.png"
+    },
     "emoji": "👑",
     "tag": "Heritage",
     "paypalBase": "https://paypal.me/themediabox/55",
@@ -128,7 +163,12 @@
     "category": "keepsakes",
     "shortDescription": "A custom chest for the quinceañera — for the tiara, the rosary, the vows.",
     "longDescription": "A custom memory chest for the quinceañera. Holds the tiara, the rosary, the last doll, the vows, the photos, and every memento from the day she became a woman. Engraved with her name, her date, and a phrase she chose. The chest she'll open at 25, at 40, at 60 — and remember who she was.",
-    "image": "/products/quinceanera-chest.svg",
+    "image": "/products/quinceanera-memory-chest-hero.png",
+    "images": {
+      "hero": "/products/quinceanera-memory-chest-hero.png",
+      "product": "/products/quinceanera-memory-chest-product.png",
+      "lifestyle": "/products/quinceanera-memory-chest-lifestyle.png"
+    },
     "emoji": "💎",
     "tag": "Once in a Lifetime",
     "paypalBase": "https://paypal.me/themediabox/95",
