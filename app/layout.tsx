@@ -76,6 +76,9 @@ function SiteHeader() {
           <Link href="/products" className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-gold-deep transition">
             Shop
           </Link>
+          <Link href="/services" className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-gold-deep transition">
+            AI Services
+          </Link>
           <Link href="/collections/weddings" className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-gold-deep transition">
             Collections
           </Link>

@@ -158,6 +158,64 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ───────────────────── AI SERVICES ───────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-20">
+        <div className="flex items-end justify-between mb-10 animate-fade-up">
+          <div>
+            <div className="inline-block px-3 py-1 rounded-full bg-bg-glass border border-border-glass text-text-tertiary text-[10px] font-bold uppercase tracking-[0.2em] mb-3">
+              New · AI Photo Services
+            </div>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-text-primary">
+              See Yourself in Any Style
+            </h2>
+            <p className="text-text-secondary text-lg mt-3 max-w-2xl">
+              Professional headshots, dating photos, family portraits, art-style renderings,
+              and celebration invitations — all from a few selfies. Delivered in under an hour.
+            </p>
+          </div>
+          <Link
+            href="/services"
+            className="hidden sm:inline-flex text-sm font-semibold text-gold-deep hover:underline whitespace-nowrap"
+          >
+            See all 16 services →
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { e: "📸", t: "AI Headshots", p: 29, s: "ai-headshots" },
+            { e: "💕", t: "Dating Photos", p: 35, s: "dating-profile-photos" },
+            { e: "💼", t: "LinkedIn Photos", p: 25, s: "linkedin-photos" },
+            { e: "👰🏾", t: "Wedding Outfits", p: 45, s: "wedding-outfits" },
+            { e: "🎓", t: "Graduation Photos", p: 35, s: "graduation-photos" },
+            { e: "👨🏾‍👩🏾‍👧🏾‍👦🏾", t: "Family Portraits", p: 55, s: "family-portraits" },
+            { e: "✨", t: "Pixar Style", p: 35, s: "pixar-style" },
+            { e: "🪶", t: "African Attire", p: 35, s: "african-traditional-attire" },
+          ].map((svc, idx) => (
+            <Link
+              key={svc.s}
+              href={`/services/${svc.s}`}
+              className="glass-card p-5 text-center group animate-fade-up"
+              style={{ animationDelay: `${idx * 40}ms` }}
+            >
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">
+                {svc.e}
+              </div>
+              <div className="font-display font-semibold text-sm text-text-primary leading-tight mb-1">
+                {svc.t}
+              </div>
+              <div className="font-mono text-xs text-gold-deep font-bold">
+                from ${svc.p}
+              </div>
+            </Link>
+          ))}
+        </div>
+        <div className="text-center mt-6 sm:hidden">
+          <Link href="/services" className="text-sm font-semibold text-gold-deep hover:underline">
+            See all 16 services →
+          </Link>
+        </div>
+      </section>
+
       {/* ───────────────────── TESTIMONIALS ───────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-20">
         <div className="text-center mb-12 animate-fade-up">

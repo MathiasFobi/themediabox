@@ -1,0 +1,247 @@
+[
+  {
+    "slug": "ai-headshots",
+    "title": "AI Headshots",
+    "emoji": "📸",
+    "tag": "Most Popular",
+    "shortDescription": "Studio-quality headshots from your phone. No photographer, no studio, no awkward poses.",
+    "longDescription": "Get 40+ professional headshots in under an hour. Upload 10–15 selfies, our AI generates corporate, creative, casual, and outdoor looks — all in your style, with your face. Perfect for LinkedIn, your website, business cards, speaker bios, or just because you deserve a good photo. Delivered in 3 different outfits, 3 backgrounds, and 2 expressions.",
+    "price": 29,
+    "whatYouGet": [
+      "40+ AI-generated headshots",
+      "3 outfits, 3 backgrounds, 2 expressions",
+      "4K resolution, ready to download",
+      "Delivered in under 1 hour"
+    ],
+    "bestFor": "LinkedIn, business cards, websites, speaker bios, dating apps"
+  },
+  {
+    "slug": "dating-profile-photos",
+    "title": "Dating Profile Photos",
+    "emoji": "💕",
+    "tag": "10x More Matches",
+    "shortDescription": "Photos that actually get matches. Optimized for Hinge, Bumble, Tinder, and every other app.",
+    "longDescription": "Stop swiping with bad bathroom selfies. Get 30+ AI-generated dating photos that show who you actually are — your smile, your vibe, your energy. Optimized by what works in 2026 dating app data: natural light, real expressions, eye contact, full-body shots, and one great group photo for social proof.",
+    "price": 35,
+    "whatYouGet": [
+      "30+ AI dating-optimized photos",
+      "Mix of close-ups, full-body, and lifestyle",
+      "Style guide: which photos lead with",
+      "100% your face — just better"
+    ],
+    "bestFor": "Hinge, Bumble, Tinder, Match, eHarmony, Bumble BFF"
+  },
+  {
+    "slug": "linkedin-photos",
+    "title": "Professional LinkedIn Photos",
+    "emoji": "💼",
+    "shortDescription": "A LinkedIn headshot that gets you noticed. Recruiters spend 0.2 seconds — make it count.",
+    "longDescription": "Your LinkedIn photo is your digital first impression. Get a polished, professional headshot that conveys competence, warmth, and approachability. The kind of photo that makes recruiters reach out, clients trust you, and connections accept. Background-blurred, well-lit, natural smile, business-casual attire generated to fit your style.",
+    "price": 25,
+    "whatYouGet": [
+      "10 professional headshots",
+      "Multiple background options (office, neutral, blurred)",
+      "Business-casual and formal options",
+      "Optimized for LinkedIn's display specs"
+    ],
+    "bestFor": "LinkedIn, company about pages, conference bios"
+  },
+  {
+    "slug": "wedding-outfits",
+    "title": "Wedding Outfits & Try-Ons",
+    "emoji": "👰🏾",
+    "shortDescription": "See yourself in 50 wedding looks before you buy. Try on dresses, suits, and traditions virtually.",
+    "longDescription": "Choosing your wedding outfit is a decision. Get a personalized AI lookbook with 50+ options — white dresses, traditional attire, modern suits, cultural variations (including West African aso-ebi, Indian lehenga, Chinese qipao, Nigerian Igbo bride, Ghanaian kente). See yourself in each before the first fitting. Share with your wedding party for votes.",
+    "price": 45,
+    "whatYouGet": [
+      "50+ AI-generated outfit visualizations",
+      "Multiple cultural traditions",
+      "Skin-tone and undertone matched",
+      "Shareable lookbook link"
+    ],
+    "bestFor": "Brides, grooms, wedding party members"
+  },
+  {
+    "slug": "graduation-photos",
+    "title": "Graduation Photos",
+    "emoji": "🎓",
+    "shortDescription": "Graduation photos that don't look like a high-school yearbook. Cinematic, editorial, you.",
+    "longDescription": "You did the work. Get photos that match. Cinematic graduation portraits in your cap and gown, on campus, in the studio, on the field, at the family home. Multiple backgrounds, lighting styles, and group shots. Add your school colors, your honors stole, your culture. From HBCU to Ivy League, we match the vibe.",
+    "price": 35,
+    "whatYouGet": [
+      "40+ graduation portraits",
+      "Solo, family, and friend group shots",
+      "Multiple campus and studio backgrounds",
+      "Stole, hood, and regalia customization"
+    ],
+    "bestFor": "High school, college, graduate school, professional school graduations"
+  },
+  {
+    "slug": "travel-photos",
+    "title": "Travel Photos",
+    "emoji": "✈️",
+    "shortDescription": "Post the trip without taking the trip. Cinematic travel photos from anywhere in the world.",
+    "longDescription": "Dreaming of Santorini? Tokyo? Lagos? Bali? Get a personalized set of travel photos with YOU in them — at iconic locations around the world. Perfect for social media, dating app bios, vision boards, or just the joy of seeing yourself somewhere beautiful. Specify the destination, we'll put you there.",
+    "price": 40,
+    "whatYouGet": [
+      "30+ cinematic travel photos",
+      "Choose up to 3 destinations",
+      "Different times of day, multiple poses",
+      "Editorial-grade composition"
+    ],
+    "bestFor": "Instagram, dating bios, vision boards, gifts"
+  },
+  {
+    "slug": "baby-photos",
+    "title": "Baby Photos & Announcements",
+    "emoji": "👶🏾",
+    "shortDescription": "Adorable AI baby photos and pregnancy announcements. No professional shoot required.",
+    "longDescription": "Sweet, gentle, beautiful photos of your little one — or future little one. Pregnancy announcements, gender reveals, monthly milestone photos, first birthday shoots. We can place your baby in soft, dreamy scenes, themed setups, or seasonal looks. Perfect for invitations, social media, and family announcements.",
+    "price": 30,
+    "whatYouGet": [
+      "20+ baby photos",
+      "Custom themes (seasonal, milestone, holiday)",
+      "Text overlay support for announcements",
+      "Family-inclusive options"
+    ],
+    "bestFor": "Pregnancy announcements, milestone photos, birth announcements, first birthday"
+  },
+  {
+    "slug": "family-portraits",
+    "title": "Family Portraits",
+    "emoji": "👨🏾‍👩🏾‍👧🏾‍👦🏾",
+    "shortDescription": "The family photo you keep meaning to take. All of you, looking great, finally.",
+    "longDescription": "The whole family, in one frame, looking good. AI-generated family portraits in settings you choose: living room, beach, garden, holiday scene, or studio. Up to 8 family members. Pets welcome. Multiple generations, multiple outfits, multiple backgrounds. The photo you'll print, frame, and put on the mantle.",
+    "price": 55,
+    "whatYouGet": [
+      "20+ family portraits",
+      "Up to 8 family members + pets",
+      "Multiple settings and outfits",
+      "Multi-generation support"
+    ],
+    "bestFor": "Holiday cards, anniversary photos, family reunions, mantles"
+  },
+  {
+    "slug": "cartoon-versions",
+    "title": "Cartoon Versions of You",
+    "emoji": "🎨",
+    "shortDescription": "Become a cartoon character. Yourself, in any art style, for any use.",
+    "longDescription": "See yourself as a Disney character, a comic book hero, a Saturday morning cartoon, a vintage anime, or a Studio Ghibli masterpiece. Multiple art styles, multiple poses, multiple outfits. Perfect for profile pictures, gifts, prints, and the pure joy of seeing yourself as a character.",
+    "price": 25,
+    "whatYouGet": [
+      "20+ cartoon-style versions",
+      "Multiple art styles",
+      "Custom outfits and props",
+      "Print-ready high resolution"
+    ],
+    "bestFor": "Profile pictures, gifts, prints, social media"
+  },
+  {
+    "slug": "pixar-style",
+    "title": "Pixar Style Portraits",
+    "emoji": "✨",
+    "tag": "Family Favorite",
+    "shortDescription": "Become a Pixar character. Your family as a Pixar movie cast.",
+    "longDescription": "You and your family, rendered as if you were the cast of a Pixar movie. The warmth, the soft lighting, the big eyes, the way Pixar makes everyone look like the hero of their own story. Available solo, as a couple, as a family, with pets. We match the Pixar aesthetic down to the color palette.",
+    "price": 35,
+    "whatYouGet": [
+      "15+ Pixar-style portraits",
+      "Solo, couple, family, and pet options",
+      "Multiple expressions and scenes",
+      "Pixar-grade color and lighting"
+    ],
+    "bestFor": "Profile pictures, family gifts, prints, social media"
+  },
+  {
+    "slug": "anime-style",
+    "title": "Anime Style Portraits",
+    "emoji": "🌸",
+    "shortDescription": "Your main character era. Anime portraits in shōnen, shōjo, and slice-of-life styles.",
+    "longDescription": "Become an anime protagonist. Choose your style: classic shōnen hero, romantic shōjo lead, slice-of-life everyman, or cyberpunk antihero. Detailed character art with your face, your hair (or whatever you want), your outfit. Multiple expressions, multiple scenes, multiple series vibes.",
+    "price": 30,
+    "whatYouGet": [
+      "20+ anime-style portraits",
+      "Multiple anime sub-genres",
+      "Custom character design",
+      "High-detail illustration style"
+    ],
+    "bestFor": "Profile pictures, social media, fan art vibes, gifts"
+  },
+  {
+    "slug": "ghibli-style",
+    "title": "Studio Ghibli Style",
+    "emoji": "🌿",
+    "tag": "Whimsical",
+    "shortDescription": "A Ghibli movie, with you in it. Soft, magical, hand-painted wonder.",
+    "longDescription": "The Ghibli aesthetic is unmistakable: hand-painted backgrounds, soft natural light, characters with round eyes and quiet wonder. Get a personalized set of Ghibli-style portraits — you flying through the sky, walking through a magical forest, sharing tea with totoros, riding the spirit train. The kind of art you'd frame and treasure forever.",
+    "price": 40,
+    "whatYouGet": [
+      "15+ Ghibli-style scenes",
+      "Hand-painted aesthetic",
+      "Magical and pastoral settings",
+      "Character-rich compositions"
+    ],
+    "bestFor": "Gifts, prints, profile pictures, art lovers"
+  },
+  {
+    "slug": "african-traditional-attire",
+    "title": "African Traditional Attire",
+    "emoji": "🪶",
+    "tag": "Heritage",
+    "shortDescription": "See yourself in kente, ankara, aso-ebi, dashiki, and more. Heritage, on you.",
+    "longDescription": "Whether you're planning a traditional wedding, attending a ceremony, or honoring your heritage, see yourself in the attire. West African kente, East African kitenge, South African shweshwe, Nigerian aso-ebi, Ghanaian smock, Ethiopian habesha kemis, Maasai shuka. Specify the occasion, the culture, the style — we'll render you in it.",
+    "price": 35,
+    "whatYouGet": [
+      "20+ traditional attire visualizations",
+      "Multiple African cultures and styles",
+      "Occasion-specific looks (wedding, festival, ceremony)",
+      "Cultural detail and authenticity"
+    ],
+    "bestFor": "Traditional weddings, cultural events, heritage celebrations, photoshoots"
+  },
+  {
+    "slug": "couple-photos",
+    "title": "Couple Photos",
+    "emoji": "💑🏾",
+    "shortDescription": "Couple photos for the relationship you have — or the one you're building.",
+    "longDescription": "Beautiful couple photos without scheduling a photographer. Send photos of you and your partner (or future partner), and we'll generate couple portraits in stunning settings: engagement, anniversary, vacation, cozy at home, fancy dinner, or cinematic drama. Real love, real vibes, real photos you'll want to print.",
+    "price": 50,
+    "whatYouGet": [
+      "25+ couple portraits",
+      "Multiple settings and styles",
+      "Engagement and wedding options",
+      "Print and digital formats"
+    ],
+    "bestFor": "Anniversaries, engagements, social media, gifts, dating profiles (as a couple)"
+  },
+  {
+    "slug": "christmas-cards",
+    "title": "Christmas & Holiday Cards",
+    "emoji": "🎄",
+    "shortDescription": "The family holiday card, designed and ready. Send to grandma in time.",
+    "longDescription": "The annual family holiday card, without the stress. Custom-designed AI holiday cards featuring your whole family — solo, couples, with pets, with grandparents. Choose your style: classic, modern, religious, funny, or cultural (Kwanzaa kinara, Diwali, Lunar New Year). Text overlay included for names and the year.",
+    "price": 45,
+    "whatYouGet": [
+      "5 fully designed holiday card concepts",
+      "Family and pet inclusive",
+      "Custom text overlay",
+      "Print-ready and digital formats"
+    ],
+    "bestFor": "Christmas cards, Kwanzaa cards, New Year cards, holiday gifts"
+  },
+  {
+    "slug": "birthday-invitations",
+    "title": "Birthday Party Invitations",
+    "emoji": "🎈",
+    "shortDescription": "Custom birthday invitations in your style. Print or digital, ready to send.",
+    "longDescription": "Custom birthday invitations designed around you, your face, your theme. Sweet 16, 21, 30, 40, 50 — any milestone. Multiple design styles: elegant, playful, cultural, retro, minimalist. Includes text overlay for the event details, RSVP info, and date. Print-ready PDFs and Instagram/SMS-friendly digital versions.",
+    "price": 25,
+    "whatYouGet": [
+      "3 invitation design concepts",
+      "Multiple style options",
+      "Custom text and event details",
+      "Print and digital formats"
+    ],
+    "bestFor": "Birthday parties, milestone birthdays, sweet 16s, quinceañeras"
+  }
+]
