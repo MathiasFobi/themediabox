@@ -1,0 +1,10 @@
+[
+  { "slug": "weddings", "title": "Weddings", "emoji": "💍" },
+  { "slug": "graduations", "title": "Graduations", "emoji": "🎓" },
+  { "slug": "birthdays", "title": "Birthdays", "emoji": "🎂" },
+  { "slug": "quinceaneras", "title": "Quinceañeras", "emoji": "👑" },
+  { "slug": "baby-showers", "title": "Baby Showers", "emoji": "🍼" },
+  { "slug": "retirements", "title": "Retirements", "emoji": "🏆" },
+  { "slug": "family-reunions", "title": "Family Reunions", "emoji": "🏠" },
+  { "slug": "kwanzaa", "title": "Kwanzaa", "emoji": "🕯️" }
+]

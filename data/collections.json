@@ -1,0 +1,58 @@
+[
+  {
+    "slug": "weddings",
+    "title": "Weddings",
+    "description": "Make your wedding unforgettable. Video guest books, custom props, memory albums, and heirloom keepsakes — for the day that becomes a story you tell forever.",
+    "emoji": "💍",
+    "products": ["video-guest-book-display", "forever-voice-magnet", "custom-photo-booth-props", "wedding-memory-album", "kente-keepsake-box"]
+  },
+  {
+    "slug": "graduations",
+    "title": "Graduations",
+    "description": "You did it. Now celebrate the way you earned. Custom standees, photo props, and keepsake boxes — for the graduate, the family, the moment.",
+    "emoji": "🎓",
+    "products": ["video-guest-book-display", "custom-photo-booth-props", "graduation-frame-standee", "kente-keepsake-box"]
+  },
+  {
+    "slug": "birthdays",
+    "title": "Birthdays",
+    "description": "From sweet 16 to 50 & fabulous, the birthday is yours. Custom props built around you, your age, your vibe.",
+    "emoji": "🎂",
+    "products": ["video-guest-book-display", "custom-photo-booth-props", "custom-birthday-props"]
+  },
+  {
+    "slug": "quinceaneras",
+    "title": "Quinceañeras",
+    "description": "The day she becomes a woman deserves a memory chest. Custom keepsakes for la quinceañera — the tiara, the rosary, the vows, and everything in between.",
+    "emoji": "👑",
+    "products": ["video-guest-book-display", "custom-photo-booth-props", "kente-keepsake-box", "quinceanera-memory-chest"]
+  },
+  {
+    "slug": "baby-showers",
+    "title": "Baby Showers",
+    "description": "Welcome the new generation. Video messages from family, custom photo props, and the first keepsake for the first day.",
+    "emoji": "🍼",
+    "products": ["video-guest-book-display", "custom-photo-booth-props"]
+  },
+  {
+    "slug": "retirements",
+    "title": "Retirements",
+    "description": "Honor the years, the work, the legacy. Voice magnets to capture their stories. Memory books for the team. A celebration that lasts.",
+    "emoji": "🏆",
+    "products": ["video-guest-book-display", "forever-voice-magnet"]
+  },
+  {
+    "slug": "family-reunions",
+    "title": "Family Reunions",
+    "description": "The family that gathers together, stays together. Voice magnets, video displays, and keepsake boxes to mark the year and the names.",
+    "emoji": "🏠",
+    "products": ["video-guest-book-display", "forever-voice-magnet", "kente-keepsake-box"]
+  },
+  {
+    "slug": "kwanzaa",
+    "title": "Kwanzaa",
+    "description": "The seven principles, the seven days, one celebration. Heirloom keepsakes, video messages, and memory boxes for the kinara.",
+    "emoji": "🕯️",
+    "products": ["video-guest-book-display", "forever-voice-magnet", "kente-keepsake-box"]
+  }
+]

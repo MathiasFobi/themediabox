@@ -1,0 +1,303 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TheMediaBox — Premium Warm Heritage Design System
+   Cream base, deep brown ink, gold accents, glassmorphism
+   Tailwind v4 theme tokens
+   ============================================================ */
+
+:root {
+  /* Base surfaces — warm cream tones */
+  --bg-base: #faf7f2;
+  --bg-elevated: #fffdf9;
+  --bg-glass: rgba(255, 253, 249, 0.55);
+  --bg-glass-hover: rgba(255, 253, 249, 0.75);
+  --bg-glass-strong: rgba(255, 253, 249, 0.88);
+
+  /* Borders — soft warm taupe */
+  --border-glass: rgba(58, 40, 24, 0.10);
+  --border-glass-strong: rgba(58, 40, 24, 0.18);
+  --border-gold: rgba(201, 169, 97, 0.45);
+
+  /* Typography — deep warm browns */
+  --text-primary: #2c1810;
+  --text-secondary: #4a3829;
+  --text-tertiary: #6b5240;
+  --text-muted: #97836e;
+
+  /* Heritage palette */
+  --gold: #c9a961;
+  --gold-deep: #a48a4d;
+  --gold-light: #e0c989;
+  --terracotta: #b85c3e;
+  --emerald-deep: #1f5f3f;
+  --wine: #6b1d2e;
+  --cream: #faf7f2;
+  --brown: #2c1810;
+  --ink: #1a1a1a;
+
+  /* Accent colors */
+  --neon-gold: #c9a961;
+  --neon-terracotta: #b85c3e;
+  --neon-emerald: #1f5f3f;
+  --neon-wine: #6b1d2e;
+
+  /* Tints for glass cards */
+  --tint-gold: rgba(201, 169, 97, 0.08);
+  --tint-terracotta: rgba(184, 92, 62, 0.07);
+  --tint-emerald: rgba(31, 95, 63, 0.06);
+  --tint-wine: rgba(107, 29, 46, 0.06);
+}
+
+@theme inline {
+  --color-bg-base: var(--bg-base);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-glass: var(--bg-glass);
+  --color-bg-glass-hover: var(--bg-glass-hover);
+  --color-bg-glass-strong: var(--bg-glass-strong);
+  --color-border-glass: var(--border-glass);
+  --color-border-glass-strong: var(--border-glass-strong);
+  --color-border-gold: var(--border-gold);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-light: var(--gold-light);
+  --color-terracotta: var(--terracotta);
+  --color-emerald-deep: var(--emerald-deep);
+  --color-wine: var(--wine);
+  --color-neon-gold: var(--neon-gold);
+  --color-neon-terracotta: var(--neon-terracotta);
+  --color-neon-emerald: var(--neon-emerald);
+  --color-neon-wine: var(--neon-wine);
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+html,
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-image:
+    radial-gradient(at 12% 8%, rgba(201, 169, 97, 0.10) 0px, transparent 50%),
+    radial-gradient(at 88% 92%, rgba(184, 92, 62, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(31, 95, 63, 0.04) 0px, transparent 70%);
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   GLASSMORPHIC PRIMITIVES
+   ============================================================ */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-glass);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 4px 20px -8px rgba(58, 40, 24, 0.10),
+    0 1px 3px -1px rgba(58, 40, 24, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-glass-strong);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 30px -10px rgba(58, 40, 24, 0.16),
+    0 2px 6px -1px rgba(58, 40, 24, 0.08);
+}
+
+.glass-panel {
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 8px 32px -12px rgba(58, 40, 24, 0.12),
+    0 2px 8px -2px rgba(58, 40, 24, 0.06);
+}
+
+.glass-input {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--bg-glass-hover);
+  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.15);
+}
+
+.glass-input::placeholder {
+  color: var(--text-muted);
+}
+
+.pill {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.pill:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-gold);
+}
+
+.pill-active {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+  color: white;
+  border-color: var(--gold-deep);
+  box-shadow: 0 4px 12px -4px rgba(201, 169, 97, 0.40);
+}
+
+/* ============================================================
+   ACCENTS & EFFECTS
+   ============================================================ */
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--gold) 0%,
+    var(--terracotta) 25%,
+    var(--gold-deep) 50%,
+    var(--terracotta) 75%,
+    var(--gold) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.gold-border {
+  border: 1px solid var(--border-gold);
+}
+
+.gold-glow {
+  box-shadow:
+    0 0 0 1px var(--border-gold),
+    0 8px 24px -8px rgba(201, 169, 97, 0.30);
+}
+
+.gold-text {
+  color: var(--gold-deep);
+}
+
+/* Pattern overlay (subtle kente-inspired grid) */
+.pattern-overlay {
+  background-image:
+    linear-gradient(rgba(201, 169, 97, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 169, 97, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 0.875rem 2rem;
+  box-shadow: 0 6px 18px -6px rgba(201, 169, 97, 0.50);
+  transition: all 0.2s;
+  border: 1px solid var(--gold-deep);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(201, 169, 97, 0.60);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 0.875rem 2rem;
+  border: 1px solid var(--border-glass-strong);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--gold);
+}
