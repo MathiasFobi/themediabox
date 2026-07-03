@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TheMediaBox · Video Guest Book</title>
+<style>
+  :root {
+    --gold: #c9a14a;
+    --gold-deep: #a17a25;
+    --ink: #1a1a1a;
+    --muted: #5a5a5a;
+    --paper: #fbf7ef;
+    --line: #e6dfd0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: ui-serif, Georgia, "Times New Roman", serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  header .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
+  header h1 { font-size: 36px; margin: 8px 0 4px; font-weight: 700; }
+  header p { color: var(--muted); margin: 0; }
+
+  .step { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .step h2 { margin: 0 0 12px; font-size: 20px; color: var(--ink); }
+  .step p { color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+
+  .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .form-row label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .form-row input, .form-row textarea {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .form-row textarea { min-height: 70px; resize: vertical; }
+
+  .video-stage {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 9/16;
+    max-width: 360px;
+    margin: 0 auto 16px;
+  }
+  .video-stage video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video-stage .badge {
+    position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: #fff; background: rgba(0,0,0,0.6);
+  }
+  .video-stage .timer { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: #fff; background: rgba(201, 161, 74, 0.9); font-variant-numeric: tabular-nums; }
+
+  .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.05s ease, box-shadow 0.1s ease;
+  }
+  button:hover { box-shadow: 0 2px 0 var(--line); }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--gold); color: #1a1a1a; border-color: var(--gold-deep); }
+  button.primary:hover { background: var(--gold-deep); color: #fff; }
+  button.danger { background: #fff; color: #b00020; border-color: #f4c0c0; }
+  button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .progress {
+    width: 100%;
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .progress .bar { height: 100%; background: var(--gold); width: 0%; transition: width 0.2s; }
+
+  .status { font-size: 13px; color: var(--muted); text-align: center; min-height: 1.4em; margin-top: 8px; }
+  .status.error { color: #b00020; }
+  .status.ok { color: #0a7a3a; }
+
+  .hidden { display: none !important; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">✦ TheMediaBox</div>
+    <h1>Video Guest Book</h1>
+    <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
+  </header>
+
+  <section class="step" id="step-details">
+    <h2>1 · Your details</h2>
+    <p>Tell us a little about yourself so the hosts know who the message is from.</p>
+    <div class="form-row">
+      <label for="name">Your name *</label>
+      <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
+    </div>
+    <div class="form-row">
+      <label for="email">Email <span style="font-weight: 400;">(optional — for the hosts to follow up)</span></label>
+      <input id="email" name="email" type="email" maxlength="200" placeholder="linda@example.com" />
+    </div>
+    <div class="form-row">
+      <label for="toWhom">Who is this message for? *</label>
+      <input id="toWhom" name="toWhom" required maxlength="80" placeholder="e.g. Maya & Jordan" />
+    </div>
+    <div class="form-row">
+      <label for="occasion">Occasion *</label>
+      <input id="occasion" name="occasion" required maxlength="80" placeholder="e.g. Wedding, 50th Birthday, Graduation" />
+    </div>
+    <div class="form-row">
+      <label for="message">A short note <span style="font-weight: 400;">(optional — appears alongside the video)</span></label>
+      <textarea id="message" name="message" maxlength="1000" placeholder="Wishing you both a lifetime of love and laughter…"></textarea>
+    </div>
+    <div class="controls">
+      <button class="primary" id="next-1">Next: record your video →</button>
+    </div>
+  </section>
+
+  <section class="step hidden" id="step-record">
+    <h2>2 · Record your message</h2>
+    <p>Hold your phone steady, look at the camera, and speak from the heart. You can re-record as many times as you like.</p>
+    <div class="video-stage">
+      <video id="preview" autoplay muted playsinline></video>
+      <div class="badge" id="badge">READY</div>
+      <div class="timer hidden" id="timer">0:00</div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="start">● Start recording</button>
+      <button class="danger hidden" id="stop">■ Stop</button>
+      <button class="hidden" id="retake">↺ Re-record</button>
+    </div>
+    <div class="status" id="record-status">Up to 3 minutes. Tap Start when you're ready.</div>
+  </section>
+
+  <section class="step hidden" id="step-review">
+    <h2>3 · Review &amp; submit</h2>
+    <p>Watch it back. If it's good, send it on its way — the hosts will review and approve.</p>
+    <div class="video-stage">
+      <video id="playback" controls playsinline></video>
+    </div>
+    <div class="controls">
+      <button id="back-2">← Back to details</button>
+      <button id="re-record">↺ Re-record</button>
+      <button class="primary" id="submit">Submit →</button>
+    </div>
+    <div class="progress hidden" id="upload-progress"><div class="bar" id="upload-bar"></div></div>
+    <div class="status" id="submit-status">When you submit, your video uploads to Cloudflare Stream and a pending entry is created.</div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const MAX_SECONDS = Number(new URLSearchParams(location.search).get("max") || "180");
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => $(id).classList.remove("hidden");
+  const hide = (id) => $(id).classList.add("hidden");
+
+  // ── Step nav
+  $("next-1").onclick = () => {
+    const name = $("name").value.trim();
+    const toWhom = $("toWhom").value.trim();
+    const occasion = $("occasion").value.trim();
+    if (!name || !toWhom || !occasion) {
+      alert("Please fill in your name, who it's for, and the occasion.");
+      return;
+    }
+    hide("step-details");
+    show("step-record");
+  };
+  $("back-2").onclick = () => { hide("step-review"); show("step-details"); };
+
+  // ── Recording state
+  let stream = null;
+  let recorder = null;
+  let chunks = [];
+  let blob = null;
+  let timerId = null;
+  let recordStart = 0;
+  let lastBlobUrl = null;
+
+  async function setupCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } },
+        audio: true,
+      });
+      $("preview").srcObject = stream;
+    } catch (e) {
+      $("record-status").textContent =
+        "Camera/microphone access was blocked. Please allow it in your browser and reload.";
+      $("record-status").classList.add("error");
+      $("start").disabled = true;
+    }
+  }
+
+  function pickMime() {
+    const opts = [
+      "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+      "video/mp4",
+      "video/webm;codecs=vp9,opus",
+      "video/webm",
+    ];
+    for (const t of opts) {
+      if (MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return "";
+  }
+
+  $("start").onclick = () => {
+    if (!stream) return;
+    chunks = [];
+    const mime = pickMime();
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = onRecordingStop;
+    recorder.start(1000);
+    recordStart = Date.now();
+    $("badge").textContent = "REC";
+    $("start").classList.add("hidden");
+    $("stop").classList.remove("hidden");
+    $("retake").classList.add("hidden");
+    $("timer").classList.remove("hidden");
+    timerId = setInterval(updateTimer, 200);
+  };
+
+  $("stop").onclick = () => {
+    if (recorder && recorder.state === "recording") recorder.stop();
+  };
+
+  $("retake").onclick = () => {
+    blob = null;
+    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+    lastBlobUrl = null;
+    $("playback").src = "";
+    hide("step-review");
+    show("step-record");
+    $("badge").textContent = "READY";
+    $("timer").classList.add("hidden");
+    $("start").classList.remove("hidden");
+    $("stop").classList.add("hidden");
+    $("retake").classList.add("hidden");
+    $("record-status").textContent = "Up to 3 minutes. Tap Start when you're ready.";
+  };
+
+  $("re-record").onclick = $("retake").onclick;
+
+  function updateTimer() {
+    const s = Math.floor((Date.now() - recordStart) / 1000);
+    const mm = Math.floor(s / 60);
+    const ss = (s % 60).toString().padStart(2, "0");
+    $("timer").textContent = `${mm}:${ss}`;
+    if (s >= MAX_SECONDS && recorder && recorder.state === "recording") {
+      recorder.stop();
+    }
+  }
+
+  async function onRecordingStop() {
+    clearInterval(timerId);
+    timerId = null;
+    $("badge").textContent = "DONE";
+    $("timer").classList.add("hidden");
+    $("stop").classList.add("hidden");
+    $("retake").classList.remove("hidden");
+    $("record-status").textContent = "Got it — review and submit, or re-record.";
+
+    blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
+    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+    lastBlobUrl = URL.createObjectURL(blob);
+    $("playback").src = lastBlobUrl;
+    hide("step-record");
+    show("step-review");
+  }
+
+  // ── Submit flow
+  $("submit").onclick = async () => {
+    if (!blob) return;
+    $("submit").disabled = true;
+    $("submit").textContent = "Uploading…";
+    $("submit-status").textContent = "Requesting an upload ticket…";
+    $("submit-status").classList.remove("error", "ok");
+    show("upload-progress");
+
+    try {
+      // 1) Direct upload ticket
+      const ticketRes = await fetch("/api/upload-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxDurationSeconds: MAX_SECONDS }),
+      });
+      if (!ticketRes.ok) throw new Error(`Ticket failed: ${ticketRes.status}`);
+      const { uid, uploadURL } = await ticketRes.json();
+
+      // 2) PUT the blob to Cloudflare Stream
+      $("submit-status").textContent = "Uploading video to Cloudflare Stream…";
+      await xhrPut(uploadURL, blob, (pct) => {
+        $("upload-bar").style.width = `${pct}%`;
+      });
+
+      // 3) Wait for processing — poll the Worker, which polls Stream
+      $("submit-status").textContent = "Processing on Cloudflare… (typically <30s)";
+      await pollReady(uid);
+
+      // 4) Submit the guest record
+      $("submit-status").textContent = "Submitting your entry…";
+      const body = {
+        name: $("name").value.trim(),
+        email: $("email").value.trim() || undefined,
+        toWhom: $("toWhom").value.trim(),
+        occasion: $("occasion").value.trim(),
+        message: $("message").value.trim() || undefined,
+        streamUid: uid,
+      };
+      const submitRes = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!submitRes.ok) {
+        const t = await submitRes.text();
+        throw new Error(`Submit failed: ${submitRes.status} ${t}`);
+      }
+      const { id } = await submitRes.json();
+      location.assign(`/thank-you?id=${encodeURIComponent(id)}`);
+    } catch (e) {
+      $("submit-status").textContent = e.message || String(e);
+      $("submit-status").classList.add("error");
+      $("submit").disabled = false;
+      $("submit").textContent = "Submit →";
+    }
+  };
+
+  function xhrPut(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.send(file);
+    });
+  }
+
+  async function pollReady(uid) {
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const r = await fetch(`/api/stream/${uid}/status`);
+        if (r.ok) {
+          const v = await r.json();
+          if (v.status === "ready") {
+            $("upload-bar").style.width = "100%";
+            return;
+          }
+          if (v.status === "error") {
+            throw new Error("Cloudflare Stream rejected the upload (error state).");
+          }
+        }
+      } catch (e) {
+        // Network blip — keep polling until the loop ends
+        if (i === 29) throw e;
+      }
+      $("upload-bar").style.width = `${Math.min(95, 30 + i * 2)}%`;
+    }
+    // Final check
+    const r = await fetch(`/api/stream/${uid}/status`);
+    if (!r.ok) throw new Error("Cloudflare Stream did not finish processing in time.");
+    const v = await r.json();
+    if (v.status !== "ready") throw new Error(`Stream status: ${v.status}`);
+  }
+
+  // Boot
+  setupCamera();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+name = "themediabox-guestbook"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "8f22679e3ed18ec29e74afdbb45c9c9d"
+
+# Static assets (guest + admin pages) served from /public
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Cloudflare Stream is referenced via REST API using CLOUDFLARE_STREAM_TOKEN.
+# The CF account ID is baked in here; the API token is set via:
+#   wrangler secret put CLOUDFLARE_STREAM_TOKEN
+# We also set CF_ACCOUNT_ID as a non-secret var (public, low-sensitivity).
+
+[vars]
+CF_ACCOUNT_ID = "8f22679e3ed18ec29e74afdbb45c9c9d"
+OWNER_EMAIL = "fobimathias@gmail.com"
+APP_URL = "http://localhost:8787"
+MAX_RECORDING_SECONDS = "180"
+MAX_UPLOAD_BYTES = "524288000"  # 500 MB
+
+# Production: change APP_URL to your custom domain (e.g. https://guestbook.themediabox.com)
+# Run `wrangler deploy` to push; binding secrets with `wrangler secret put ...`

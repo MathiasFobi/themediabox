@@ -1,0 +1,78 @@
+/**
+ * Cloudflare Workers environment bindings + vars for TheMediaBox Guest Book.
+ *
+ * Secrets (set with `wrangler secret put`):
+ *   CLOUDFLARE_STREAM_TOKEN  — Account.Stream:Edit scope
+ *   FIREBASE_PRIVATE_KEY     — (optional) Firebase Admin service account key, JSON-encoded
+ *
+ * Vars (set in wrangler.toml):
+ *   CF_ACCOUNT_ID, OWNER_EMAIL, APP_URL, MAX_RECORDING_SECONDS, MAX_UPLOAD_BYTES
+ */
+export interface Env {
+  // Bindings
+  ASSETS: Fetcher;
+
+  // Vars
+  CF_ACCOUNT_ID: string;
+  OWNER_EMAIL: string;
+  APP_URL: string;
+  MAX_RECORDING_SECONDS: string;
+  MAX_UPLOAD_BYTES: string;
+
+  // Secrets
+  CLOUDFLARE_STREAM_TOKEN: string;
+  FIREBASE_PRIVATE_KEY?: string;
+}
+
+export interface GuestBook {
+  id: string;
+  name: string;          // guest's display name (free-text)
+  email?: string;        // optional, for owner to follow up
+  toWhom: string;        // who the message is for (the host/event)
+  occasion: string;      // free-text, e.g. "Wedding", "50th Birthday"
+  message?: string;      // optional text message alongside the video
+  streamUid: string;     // Cloudflare Stream UID
+  streamPlaybackUrl: string; // https://customer-...cloudflarestream.com/<uid>/manifest/video.m3u8
+  streamThumbnailUrl?: string;
+  durationSeconds: number;
+  status: "pending" | "approved" | "rejected";
+  createdAt: number;     // epoch ms
+  moderatedAt?: number;
+  moderatedBy?: string;
+  rejectReason?: string;
+}
+
+export interface FirestoreDoc {
+  fields: Record<string, FirestoreValue>;
+}
+
+export type FirestoreValue =
+  | { stringValue: string }
+  | { integerValue: string }
+  | { doubleValue: number }
+  | { booleanValue: boolean }
+  | { timestampValue: string }
+  | { nullValue: null };
+
+export function toFirestoreValue(v: unknown): FirestoreValue {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "string") return { stringValue: v };
+  if (typeof v === "number") {
+    return Number.isInteger(v)
+      ? { integerValue: String(v) }
+      : { doubleValue: v };
+  }
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (v instanceof Date) return { timestampValue: v.toISOString() };
+  throw new Error(`Unsupported Firestore value type: ${typeof v}`);
+}
+
+export function fromFirestoreValue<T = unknown>(v: FirestoreValue): T {
+  if ("nullValue" in v) return null as T;
+  if ("stringValue" in v) return v.stringValue as T;
+  if ("integerValue" in v) return Number(v.integerValue) as T;
+  if ("doubleValue" in v) return v.doubleValue as T;
+  if ("booleanValue" in v) return v.booleanValue as T;
+  if ("timestampValue" in v) return v.timestampValue as T;
+  throw new Error("Unknown Firestore value shape");
+}

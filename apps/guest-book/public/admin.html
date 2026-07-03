@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TheMediaBox · Owner</title>
+<style>
+  :root { --gold: #c9a14a; --gold-deep: #a17a25; --ink: #1a1a1a; --muted: #5a5a5a; --paper: #fbf7ef; --line: #e6dfd0; --ok: #0a7a3a; --bad: #b00020; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: var(--paper); color: var(--ink); margin: 0; }
+  header { background: #fff; border-bottom: 1px solid var(--line); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .spacer { flex: 1; }
+  main { max-width: 1100px; margin: 24px auto; padding: 0 20px 80px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tabs button { background: transparent; border: 0; padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
+  .tabs button.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 200px 1fr auto; gap: 16px; align-items: center; }
+  .card .thumb { background: #000; border-radius: 8px; aspect-ratio: 9/16; overflow: hidden; }
+  .card .thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .card .meta h3 { margin: 0 0 4px; font-size: 16px; }
+  .card .meta p { margin: 0; color: var(--muted); font-size: 13px; }
+  .card .actions { display: flex; flex-direction: column; gap: 6px; }
+  .card .actions button { padding: 8px 14px; font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  button.primary { background: var(--gold); border-color: var(--gold-deep); }
+  button.primary:hover { background: var(--gold-deep); color: #fff; }
+  button.danger { color: var(--bad); border-color: #f4c0c0; }
+  button.danger:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+  button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .crest { font-size: 48px; margin-bottom: 12px; }
+
+  .login-card { max-width: 380px; margin: 80px auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 32px; text-align: center; }
+  .login-card h2 { margin: 0 0 8px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .login-card input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
+  .login-card button { width: 100%; padding: 10px; }
+
+  .hidden { display: none !important; }
+
+  .signin-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .signin-block label { font-size: 12px; color: var(--muted); font-weight: 600; text-align: left; }
+</style>
+</head>
+<body>
+<header>
+  <h1>✦ TheMediaBox · Guest Book</h1>
+  <div class="spacer"></div>
+  <span id="user-email" style="font-size: 13px; color: var(--muted);"></span>
+  <button id="logout-btn" class="hidden">Sign out</button>
+</header>
+
+<main>
+  <!-- Login panel -->
+  <div id="login-panel" class="login-card">
+    <h2>Owner sign in</h2>
+    <p>Sign in with your Google account. Only the configured owner can moderate.</p>
+    <div class="signin-block">
+      <label for="email-input">Email</label>
+      <input id="email-input" type="email" placeholder="you@gmail.com" />
+    </div>
+    <div class="signin-block">
+      <label for="password-input">Password</label>
+      <input id="password-input" type="password" placeholder="••••••••" />
+    </div>
+    <button class="primary" id="signin-btn">Sign in</button>
+    <p id="login-status" style="font-size: 12px; color: var(--bad); margin-top: 12px; min-height: 1.4em;"></p>
+  </div>
+
+  <!-- Moderation panel (after sign-in) -->
+  <div id="mod-panel" class="hidden">
+    <div class="tabs">
+      <button data-status="pending" class="active">Pending</button>
+      <button data-status="approved">Approved</button>
+      <button data-status="rejected">Rejected</button>
+    </div>
+    <div id="list" class="row"></div>
+  </div>
+</main>
+
+<!-- Firebase compat SDK (loaded from gstatic; we use the modular API via dynamic import) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBexCqxBTBo9M3xa2JLp1SiWFQd5NzDteI",
+    authDomain: "themediabox-guestbook.firebaseapp.com",
+    projectId: "themediabox-guestbook",
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => $(id).classList.remove("hidden");
+  const hide = (id) => $(id).classList.add("hidden");
+
+  let currentStatus = "pending";
+
+  $("signin-btn").onclick = async () => {
+    const email = $("email-input").value.trim();
+    const password = $("password-input").value;
+    if (!email || !password) {
+      $("login-status").textContent = "Email and password required.";
+      return;
+    }
+    $("login-status").textContent = "";
+    $("signin-btn").disabled = true;
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Login failed: ${res.status}`);
+      }
+      onSignedIn(cred.user.email);
+    } catch (e) {
+      $("login-status").textContent = e.message || String(e);
+    } finally {
+      $("signin-btn").disabled = false;
+    }
+  };
+
+  $("logout-btn").onclick = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    await signOut(auth);
+    hide("mod-panel");
+    show("login-panel");
+    hide("logout-btn");
+    $("user-email").textContent = "";
+  };
+
+  document.querySelectorAll(".tabs button").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentStatus = btn.dataset.status;
+      load();
+    };
+  });
+
+  function onSignedIn(email) {
+    $("user-email").textContent = email;
+    show("logout-btn");
+    hide("login-panel");
+    show("mod-panel");
+    load();
+  }
+
+  async function load() {
+    const list = $("list");
+    list.innerHTML = `<div class="empty"><div class="crest">⏳</div>Loading…</div>`;
+    const res = await fetch(`/api/admin/guests?status=${currentStatus}&limit=200`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      list.innerHTML = `<div class="empty"><div class="crest">⚠</div>Failed to load: ${res.status}</div>`;
+      return;
+    }
+    const { guests } = await res.json();
+    if (!guests.length) {
+      list.innerHTML = `<div class="empty"><div class="crest">✦</div>No ${currentStatus} entries.</div>`;
+      return;
+    }
+    list.innerHTML = "";
+    for (const g of guests) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="thumb"><video src="${g.streamPlaybackUrl}" muted playsinline></video></div>
+        <div class="meta">
+          <h3>${escapeHtml(g.name)} → ${escapeHtml(g.toWhom)}</h3>
+          <p><strong>${escapeHtml(g.occasion)}</strong> · ${Math.round(g.durationSeconds || 0)}s · ${new Date(g.createdAt).toLocaleString()}</p>
+          ${g.message ? `<p style="margin-top: 6px; color: var(--ink); font-style: italic;">"${escapeHtml(g.message)}"</p>` : ""}
+        </div>
+        <div class="actions"></div>
+      `;
+      const actions = card.querySelector(".actions");
+
+      if (currentStatus === "pending") {
+        const approve = document.createElement("button");
+        approve.className = "primary";
+        approve.textContent = "✓ Approve";
+        approve.onclick = () => moderate(g.id, "approve", approve);
+        const reject = document.createElement("button");
+        reject.className = "danger";
+        reject.textContent = "✕ Reject";
+        reject.onclick = () => moderate(g.id, "reject", reject);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(approve, reject, del);
+      } else if (currentStatus === "approved") {
+        const reject = document.createElement("button");
+        reject.className = "danger";
+        reject.textContent = "✕ Unapprove";
+        reject.onclick = () => moderate(g.id, "reject", reject);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(reject, del);
+      } else {
+        const approve = document.createElement("button");
+        approve.className = "primary";
+        approve.textContent = "✓ Approve";
+        approve.onclick = () => moderate(g.id, "approve", approve);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(approve, del);
+      }
+      list.appendChild(card);
+    }
+  }
+
+  async function moderate(id, action, btn) {
+    btn.disabled = true;
+    const res = await fetch(`/api/admin/guests/${id}/${action}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: action === "reject" ? JSON.stringify({ reason: "" }) : "{}",
+    });
+    if (!res.ok) {
+      alert(`Failed: ${res.status}`);
+      btn.disabled = false;
+      return;
+    }
+    load();
+  }
+
+  async function del0(id, btn) {
+    if (!confirm("Delete this entry and its video?")) return;
+    btn.disabled = true;
+    const res = await fetch(`/api/admin/guests/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert(`Failed: ${res.status}`);
+      btn.disabled = false;
+      return;
+    }
+    load();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // Firebase Auth state listener (only fires after the user signs in)
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (res.ok) onSignedIn(user.email);
+    } catch {}
+  });
+</script>
+</body>
+</html>
