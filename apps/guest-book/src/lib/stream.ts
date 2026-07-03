@@ -29,6 +29,7 @@ export interface StreamUploadResult {
   thumbnail?: string;
   duration?: number;
   status: string;
+  readyToStream?: boolean;
 }
 
 /**
@@ -93,18 +94,26 @@ export async function getStreamVideo(
   const json = (await res.json()) as {
     result: {
       uid: string;
-      status: string;
+      status: { state: string; errorReasonCode?: string; errorReasonText?: string } | string;
       playback: { url: string };
       thumbnail?: string;
       duration?: number;
+      readyToStream?: boolean;
     };
   };
+  // API has returned `status` as either an object `{ state: "ready" }` or
+  // (older docs) a plain string. Normalize.
+  const state =
+    typeof json.result.status === "string"
+      ? json.result.status
+      : json.result.status.state;
   return {
     uid: json.result.uid,
-    status: json.result.status,
+    status: state,
     playbackUrl: json.result.playback.url,
     thumbnail: json.result.thumbnail,
     duration: json.result.duration,
+    readyToStream: json.result.readyToStream ?? (state === "ready"),
   };
 }
 

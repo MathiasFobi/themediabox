@@ -144,7 +144,85 @@ app.post("/api/admin/logout", () => {
 // Stream upload ticket — direct upload flow
 // ─────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────
+// Stream upload — server-proxied flow
+//
+// Why not direct upload: Cloudflare Stream's `direct_upload` URL on this
+// account has a TUS protocol regression — the `Tus-Resumable` header is
+// stripped by a Data Worker in front of `upload.cloudflarestream.com`, so
+// no upload method works (returns 400 with "Decoding Error" or "Basic
+// uploads must be made using POST method"). The plain server-side
+// multipart upload via the Stream REST API works fine.
+//
+// Tradeoff: the Worker proxies the bytes, so we're subject to the Worker
+// request body limit (100 MB on free, 500 MB on paid). For wedding videos
+// (~100-300 MB at standard resolution) this is fine on the paid plan. If
+// we hit the limit, we can chunk the upload across multiple Worker calls
+// using the Stream "clip" / "upload by URL" APIs.
+// ─────────────────────────────────────────────────────────────────────────
+
+app.post("/api/upload", async (c) => {
+  const contentType = c.req.header("content-type") ?? "";
+  if (!contentType.startsWith("video/")) {
+    return err("Content-Type must be a video/* type", 400);
+  }
+  const maxBytes = Number(c.env.MAX_UPLOAD_BYTES);
+  const contentLength = Number(c.req.header("content-length") ?? "0");
+  if (maxBytes && contentLength && contentLength > maxBytes) {
+    return err(`File too large (${contentLength} > ${maxBytes})`, 413);
+  }
+
+  try {
+    // Build a fresh multipart/form-data request to Cloudflare Stream.
+    // We stream the body through; the body is the raw video bytes.
+    const filename = c.req.header("x-filename") ?? "recording.bin";
+    const body = await c.req.raw.arrayBuffer();
+    const form = new FormData();
+    form.set("file", new Blob([body], { type: contentType }), filename);
+
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${c.env.CF_ACCOUNT_ID}/stream`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${c.env.CLOUDFLARE_STREAM_TOKEN}`,
+        },
+        body: form,
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Stream upload failed", res.status, text);
+      return err(`Stream upload failed: ${res.status}`, 502);
+    }
+    const stream = (await res.json()) as {
+      result: {
+        uid: string;
+        playback: { url: string };
+        thumbnail?: string;
+        duration?: number;
+        status: { state: string };
+        readyToStream: boolean;
+      };
+    };
+    return json({
+      uid: stream.result.uid,
+      playbackUrl: stream.result.playback.url,
+      thumbnail: stream.result.thumbnail,
+      duration: stream.result.duration,
+      status: stream.result.status.state,
+      readyToStream: stream.result.readyToStream,
+    });
+  } catch (e) {
+    console.error("upload error", e);
+    return err(e instanceof Error ? e.message : "Upload failed", 500);
+  }
+});
+
 app.post("/api/upload-ticket", async (c) => {
+  // Kept for backward compat — the client no longer uses it, but if a
+  // direct-upload ticket has already been issued we still want it to work
+  // for clients that come back to this endpoint.
   const body = (await c.req.json().catch(() => ({}))) as { maxDurationSeconds?: number };
   const max = body.maxDurationSeconds ?? Number(c.env.MAX_RECORDING_SECONDS);
   try {

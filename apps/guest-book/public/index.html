@@ -289,31 +289,28 @@
     if (!blob) return;
     $("submit").disabled = true;
     $("submit").textContent = "Uploading…";
-    $("submit-status").textContent = "Requesting an upload ticket…";
+    $("submit-status").textContent = "Uploading your video to Cloudflare Stream…";
     $("submit-status").classList.remove("error", "ok");
     show("upload-progress");
 
+    let streamUid;
     try {
-      // 1) Direct upload ticket
-      const ticketRes = await fetch("/api/upload-ticket", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ maxDurationSeconds: MAX_SECONDS }),
-      });
-      if (!ticketRes.ok) throw new Error(`Ticket failed: ${ticketRes.status}`);
-      const { uid, uploadURL } = await ticketRes.json();
+      // 1) Upload the video bytes to our Worker, which forwards to Cloudflare Stream.
+      //    (Direct browser → Stream is broken on this account due to a TUS regression.)
+      const uploadRes = await xhrPost(
+        "/api/upload",
+        blob,
+        blob.type || "video/webm",
+        (pct) => { $("upload-bar").style.width = `${pct}%`; }
+      );
+      streamUid = uploadRes.uid;
+      if (!streamUid) throw new Error("Upload succeeded but no uid returned");
 
-      // 2) PUT the blob to Cloudflare Stream
-      $("submit-status").textContent = "Uploading video to Cloudflare Stream…";
-      await xhrPut(uploadURL, blob, (pct) => {
-        $("upload-bar").style.width = `${pct}%`;
-      });
-
-      // 3) Wait for processing — poll the Worker, which polls Stream
+      // 2) Wait for Stream processing to finish
       $("submit-status").textContent = "Processing on Cloudflare… (typically <30s)";
-      await pollReady(uid);
+      await pollReady(streamUid);
 
-      // 4) Submit the guest record
+      // 3) Submit the guest record
       $("submit-status").textContent = "Submitting your entry…";
       const body = {
         name: $("name").value.trim(),
@@ -321,7 +318,7 @@
         toWhom: $("toWhom").value.trim(),
         occasion: $("occasion").value.trim(),
         message: $("message").value.trim() || undefined,
-        streamUid: uid,
+        streamUid,
       };
       const submitRes = await fetch("/api/guests", {
         method: "POST",
@@ -341,6 +338,28 @@
       $("submit").textContent = "Submit →";
     }
   };
+
+  function xhrPost(url, blob, contentType, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.setRequestHeader("Content-Type", contentType);
+      xhr.setRequestHeader("X-Filename", "recording." + (contentType.split("/")[1] || "webm"));
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { resolve({}); }
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText || ""}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Network error during upload — check your connection and that the Worker is reachable."));
+      xhr.send(blob);
+    });
+  }
 
   function xhrPut(url, file, onProgress) {
     return new Promise((resolve, reject) => {
