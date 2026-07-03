@@ -95,7 +95,7 @@ export async function getStreamVideo(
     result: {
       uid: string;
       status: { state: string; errorReasonCode?: string; errorReasonText?: string } | string;
-      playback: { url: string };
+      playback: { url?: string; hls?: string; dash?: string };
       thumbnail?: string;
       duration?: number;
       readyToStream?: boolean;
@@ -107,10 +107,17 @@ export async function getStreamVideo(
     typeof json.result.status === "string"
       ? json.result.status
       : json.result.status.state;
+  // Stream's `playback` field is shaped `{ hls, dash }` for processed videos
+  // and may have an empty/legacy `url` field too. Use hls as canonical.
+  const playbackUrl =
+    json.result.playback.hls ??
+    json.result.playback.url ??
+    json.result.playback.dash ??
+    "";
   return {
     uid: json.result.uid,
     status: state,
-    playbackUrl: json.result.playback.url,
+    playbackUrl,
     thumbnail: json.result.thumbnail,
     duration: json.result.duration,
     readyToStream: json.result.readyToStream ?? (state === "ready"),

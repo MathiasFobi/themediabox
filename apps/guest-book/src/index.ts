@@ -198,7 +198,7 @@ app.post("/api/upload", async (c) => {
     const stream = (await res.json()) as {
       result: {
         uid: string;
-        playback: { url: string };
+        playback: { url?: string; hls?: string; dash?: string };
         thumbnail?: string;
         duration?: number;
         status: { state: string };
@@ -207,7 +207,11 @@ app.post("/api/upload", async (c) => {
     };
     return json({
       uid: stream.result.uid,
-      playbackUrl: stream.result.playback.url,
+      playbackUrl:
+        stream.result.playback.hls ??
+        stream.result.playback.url ??
+        stream.result.playback.dash ??
+        "",
       thumbnail: stream.result.thumbnail,
       duration: stream.result.duration,
       status: stream.result.status.state,
