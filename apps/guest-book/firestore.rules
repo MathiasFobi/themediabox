@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Cloud Firestore security rules for TheMediaBox Guest Book.
+//
+// Design:
+//   - Public read access is granted ONLY for documents where status == "approved".
+//     Pending and rejected documents are owner-only.
+//   - Public write access is GRANTED but heavily rate-limited and field-validated
+//     via the Worker (which uses the service account, bypassing these rules).
+//     This is intentional: random guests at weddings shouldn't need a Firebase
+//     account to leave a message. The Worker is the trust boundary.
+//
+// If you ever want to gate public writes via client SDK instead, replace
+// the service-account pattern in src/lib/firestore.ts with `allow create` rules
+// below. For now, the rules below exist to (a) lock the collection down at the
+// database boundary as a backstop, and (b) keep the public read filter honest.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Guests collection
+    match /guests/{guestId} {
+      // Public read: only approved entries
+      allow read: if resource.data.status == "approved";
+
+      // No client-side writes allowed. The Worker (service account) writes here.
+      // If you want to let clients write directly, replace with:
+      //   allow create: if request.resource.data.status == "pending"
+      //                 && request.resource.data.name is string
+      //                 && request.resource.data.name.size() <= 80
+      //                 && request.resource.data.toWhom is string
+      //                 && request.resource.data.streamUid is string;
+      //   allow update, delete: if false;
+      allow write: if false;
+    }
+
+    // Lock down everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TheMediaBox · Video Guest Book</title>
+<style>
+  :root {
+    --gold: #c9a14a;
+    --gold-deep: #a17a25;
+    --ink: #1a1a1a;
+    --muted: #5a5a5a;
+    --paper: #fbf7ef;
+    --line: #e6dfd0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: ui-serif, Georgia, "Times New Roman", serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; position: relative; }
+  header .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
+  header h1 { font-size: 36px; margin: 8px 0 4px; font-weight: 700; }
+  header p { color: var(--muted); margin: 0; }
+  header .host-link {
+    position: absolute; top: 8px; right: 0;
+    font-size: 12px; color: var(--muted); text-decoration: none;
+    padding: 6px 10px; border-radius: 6px;
+  }
+  header .host-link:hover { color: var(--gold-deep); background: rgba(201, 161, 74, 0.08); }
+
+  .step { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .step h2 { margin: 0 0 12px; font-size: 20px; color: var(--ink); }
+  .step p { color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+
+  .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .form-row label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .form-row input, .form-row textarea {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .form-row textarea { min-height: 70px; resize: vertical; }
+
+  .video-stage {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 9/16;
+    max-width: 360px;
+    margin: 0 auto 16px;
+  }
+  .video-stage video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* The front-camera live preview is naturally mirrored by the browser (acts
+     as a mirror for the user), but the MediaRecorder data is the raw
+     un-mirrored output. Un-mirror the live preview so what the user sees
+     while recording matches what gets saved. The playback already shows
+     the raw file, so it doesn't need a transform. */
+  #preview { transform: scaleX(-1); }
+  .video-stage .badge {
+    position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: #fff; background: rgba(0,0,0,0.6);
+  }
+  .video-stage .timer { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: #fff; background: rgba(201, 161, 74, 0.9); font-variant-numeric: tabular-nums; }
+
+  .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.05s ease, box-shadow 0.1s ease;
+  }
+  button:hover { box-shadow: 0 2px 0 var(--line); }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--gold); color: #1a1a1a; border-color: var(--gold-deep); }
+  button.primary:hover { background: var(--gold-deep); color: #fff; }
+  button.danger { background: #fff; color: #b00020; border-color: #f4c0c0; }
+  button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .progress {
+    width: 100%;
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .progress .bar { height: 100%; background: var(--gold); width: 0%; transition: width 0.2s; }
+
+  .status { font-size: 13px; color: var(--muted); text-align: center; min-height: 1.4em; margin-top: 8px; }
+  .status.error { color: #b00020; }
+  .status.ok { color: #0a7a3a; }
+
+  .hidden { display: none !important; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+
+  /* Hero image (event.headerImage) */
+  .header-image-wrap {
+    margin: 20px -20px 0;  /* bleed to edge of the centered main column */
+    overflow: hidden;
+    background: var(--line);
+  }
+  .header-image-wrap img {
+    width: 100%;
+    height: auto;          /* preserve the image's natural aspect ratio */
+    max-height: 480px;     /* cap so a huge image doesn't dominate the page */
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Landing-page hero */
+  .hero-cta {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 14px 32px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--gold-deep);
+    transition: transform 0.05s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .hero-cta:hover { background: var(--gold-deep); color: #fff; box-shadow: 0 2px 0 var(--line); }
+  .hero-cta:active { transform: translateY(1px); }
+
+  /* "How it works" 3-step strip */
+  .how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .how-step {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .how-step .num {
+    display: inline-block;
+    width: 32px; height: 32px;
+    line-height: 32px;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 50%;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .how-step h3 { margin: 0 0 4px; font-size: 14px; }
+  .how-step p { margin: 0; font-size: 12px; color: var(--muted); }
+
+  /* "Watch first" promo block */
+  .promo-block {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 0 0 20px;
+    text-align: center;
+  }
+  .promo-block h2 { margin: 0 0 4px; font-size: 22px; }
+  .promo-block .sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+  .promo-embed {
+    margin: 0 -8px;
+    background: #000;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+  .promo-embed-inner {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+  }
+  .promo-embed-inner iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  .promo-block .promo-cta {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--gold-deep);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .promo-block .promo-cta:hover { background: var(--gold-deep); color: #fff; }
+</style>
+</head>
+<body>
+<main>
+  <header id="page-header">
+    <div class="eyebrow">✦ TheMediaBox</div>
+    <a id="host-link" class="host-link" href="/admin">Are you the host? Sign in →</a>
+    <h1>Video Guest Book</h1>
+    <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
+    <a class="hero-cta" href="#record">✦ Record your message</a>
+    <div class="header-image-wrap hidden" id="header-image-wrap">
+      <img id="header-image" alt="" />
+    </div>
+  </header>
+
+  <!-- How it works: 3 steps -->
+  <section class="how-it-works" aria-label="How it works">
+    <div class="how-step">
+      <div class="num">1</div>
+      <h3>Tell us who</h3>
+      <p>Your name and who the message is for</p>
+    </div>
+    <div class="how-step">
+      <div class="num">2</div>
+      <h3>Record your video</h3>
+      <p>Up to 3 minutes, right from your phone</p>
+    </div>
+    <div class="how-step">
+      <div class="num">3</div>
+      <h3>Done</h3>
+      <p>The host reviews and approves your message</p>
+    </div>
+  </section>
+
+  <!-- Watch the demo (YouTube) — hidden when no promoVideoId is set -->
+  <section class="promo-block hidden" id="promo-block">
+    <h2>See it in action</h2>
+    <p class="sub">Watch a quick demo, then record your own below.</p>
+    <div class="promo-embed">
+      <div class="promo-embed-inner" id="promo-embed-inner"></div>
+    </div>
+    <a class="promo-cta" href="#record">Now record your own ↓</a>
+  </section>
+
+  <section class="step" id="record">
+    <h2 id="record-title">Record your message</h2>
+    <p>Fill in your details below, then record a short video. You can re-record as many times as you like.</p>
+    <!-- step-details is now inside the record block -->
+    <div id="step-details">
+      <div class="form-row">
+        <label for="name">Your name *</label>
+        <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
+      </div>
+    <div class="form-row">
+      <label for="email">Email <span style="font-weight: 400;">(optional — for the hosts to follow up)</span></label>
+      <input id="email" name="email" type="email" maxlength="200" placeholder="linda@example.com" />
+    </div>
+    <div class="form-row">
+      <label for="toWhom">Who is this message for? *</label>
+      <input id="toWhom" name="toWhom" required maxlength="80" placeholder="e.g. Maya & Jordan" />
+    </div>
+    <div class="form-row">
+      <label for="occasion">Occasion *</label>
+      <input id="occasion" name="occasion" required maxlength="80" placeholder="e.g. Wedding, 50th Birthday, Graduation" />
+    </div>
+    <div class="form-row">
+      <label for="message">A short note <span style="font-weight: 400;">(optional — appears alongside the video)</span></label>
+      <textarea id="message" name="message" maxlength="1000" placeholder="Wishing you both a lifetime of love and laughter…"></textarea>
+    </div>
+    <div class="controls">
+      <button class="primary" id="next-1">Next: record your video →</button>
+    </div>
+    </div><!-- /step-details -->
+  </section>
+
+  <section class="step hidden" id="step-record">
+    <h2>2 · Record your message</h2>
+    <p>Hold your phone steady, look at the camera, and speak from the heart. You can re-record as many times as you like.</p>
+    <div class="video-stage">
+      <video id="preview" autoplay muted playsinline></video>
+      <div class="badge" id="badge">READY</div>
+      <div class="timer hidden" id="timer">0:00</div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="start">● Start recording</button>
+      <button class="danger hidden" id="stop">■ Stop</button>
+      <button class="hidden" id="retake">↺ Re-record</button>
+    </div>
+    <div class="status" id="record-status">Up to 3 minutes. Tap Start when you're ready.</div>
+  </section>
+
+  <section class="step hidden" id="step-review">
+    <h2>3 · Review &amp; submit</h2>
+    <p>Watch it back. If it's good, send it on its way — the hosts will review and approve.</p>
+    <div class="video-stage">
+      <video id="playback" controls playsinline></video>
+    </div>
+    <div class="controls">
+      <button id="back-2">← Back to details</button>
+      <button id="re-record">↺ Re-record</button>
+      <button class="primary" id="submit">Submit →</button>
+    </div>
+    <div class="progress hidden" id="upload-progress"><div class="bar" id="upload-bar"></div></div>
+    <div class="status" id="submit-status">When you submit, your video uploads to Cloudflare Stream and a pending entry is created.</div>
+  </section>
+
+  <!-- Footer with link to the main site + a link to the public feed -->
+  <footer style="text-align: center; padding: 32px 0 16px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); margin-top: 32px;">
+    <p>Watch the messages → <a id="feed-link" href="/feed" style="color: var(--gold-deep); font-weight: 600;">/feed</a></p>
+    <p style="margin-top: 6px;">More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">themediabox.vercel.app</a></p>
+  </footer>
+  <script>
+    // Inline script (no defer) — set the feed link to use the current event slug
+    // so the link works even before the main module loads.
+    (() => {
+      const m = location.pathname.match(/^\/([a-z0-9-]{1,50})(?:\/|$)/);
+      if (m) {
+        const slug = m[1];
+        const link = document.getElementById("feed-link");
+        if (link) link.href = `/${slug}/feed`;
+        const host = document.getElementById("host-link");
+        if (host) host.href = `/${slug}/admin`;
+      }
+    })();
+  </script>
+</main>
+
+<script>
+(() => {
+  const MAX_SECONDS = Number(new URLSearchParams(location.search).get("max") || "180");
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => $(id).classList.remove("hidden");
+  const hide = (id) => $(id).classList.add("hidden");
+
+  $("next-1").onclick = () => {
+    const name = $("name").value.trim();
+    const toWhom = $("toWhom").value.trim();
+    const occasion = $("occasion").value.trim();
+    if (!name || !toWhom || !occasion) {
+      alert("Please fill in your name, who it's for, and the occasion.");
+      return;
+    }
+    hide("step-details");
+    show("step-record");
+  };
+  $("back-2").onclick = () => { hide("step-review"); show("step-details"); };
+
+  // ── Recording state
+  let stream = null;
+  let recorder = null;
+  let chunks = [];
+  let blob = null;
+  let timerId = null;
+  let recordStart = 0;
+  let lastBlobUrl = null;
+
+  async function setupCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } },
+        audio: true,
+      });
+      $("preview").srcObject = stream;
+    } catch (e) {
+      $("record-status").textContent =
+        "Camera/microphone access was blocked. Please allow it in your browser and reload.";
+      $("record-status").classList.add("error");
+      $("start").disabled = true;
+    }
+  }
+
+  function pickMime() {
+    const opts = [
+      "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+      "video/mp4",
+      "video/webm;codecs=vp9,opus",
+      "video/webm",
+    ];
+    for (const t of opts) {
+      if (MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return "";
+  }
+
+  $("start").onclick = () => {
+    if (!stream) return;
+    chunks = [];
+    const mime = pickMime();
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = onRecordingStop;
+    recorder.start(1000);
+    recordStart = Date.now();
+    $("badge").textContent = "REC";
+    $("start").classList.add("hidden");
+    $("stop").classList.remove("hidden");
+    $("retake").classList.add("hidden");
+    $("timer").classList.remove("hidden");
+    timerId = setInterval(updateTimer, 200);
+  };
+
+  $("stop").onclick = () => {
+    if (recorder && recorder.state === "recording") recorder.stop();
+  };
+
+  $("retake").onclick = () => {
+    blob = null;
+    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+    lastBlobUrl = null;
+    $("playback").src = "";
+    hide("step-review");
+    show("step-record");
+    $("badge").textContent = "READY";
+    $("timer").classList.add("hidden");
+    $("start").classList.remove("hidden");
+    $("stop").classList.add("hidden");
+    $("retake").classList.add("hidden");
+    $("record-status").textContent = "Up to 3 minutes. Tap Start when you're ready.";
+  };
+
+  $("re-record").onclick = $("retake").onclick;
+
+  function updateTimer() {
+    const s = Math.floor((Date.now() - recordStart) / 1000);
+    const mm = Math.floor(s / 60);
+    const ss = (s % 60).toString().padStart(2, "0");
+    $("timer").textContent = `${mm}:${ss}`;
+    if (s >= MAX_SECONDS && recorder && recorder.state === "recording") {
+      recorder.stop();
+    }
+  }
+
+  async function onRecordingStop() {
+    clearInterval(timerId);
+    timerId = null;
+    $("badge").textContent = "DONE";
+    $("timer").classList.add("hidden");
+    $("stop").classList.add("hidden");
+    $("retake").classList.remove("hidden");
+    $("record-status").textContent = "Got it — review and submit, or re-record.";
+
+    blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
+    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+    lastBlobUrl = URL.createObjectURL(blob);
+    $("playback").src = lastBlobUrl;
+    hide("step-record");
+    show("step-review");
+  }
+
+  // ── Submit flow
+  $("submit").onclick = async () => {
+    if (!blob) return;
+    $("submit").disabled = true;
+    $("submit").textContent = "Uploading…";
+    $("submit-status").textContent = "Uploading your video to Cloudflare Stream…";
+    $("submit-status").classList.remove("error", "ok");
+    show("upload-progress");
+
+    let streamUid;
+    try {
+      // 1) Upload the video bytes to our Worker, which forwards to Cloudflare Stream.
+      //    (Direct browser → Stream is broken on this account due to a TUS regression.)
+      const uploadRes = await xhrPost(
+        "/api/upload",
+        blob,
+        blob.type || "video/webm",
+        (pct) => { $("upload-bar").style.width = `${pct}%`; }
+      );
+      streamUid = uploadRes.uid;
+      if (!streamUid) throw new Error("Upload succeeded but no uid returned");
+
+      // 2) Wait for Stream processing to finish
+      $("submit-status").textContent = "Processing on Cloudflare… (typically <30s)";
+      await pollReady(streamUid);
+
+      // 3) Submit the guest record
+      $("submit-status").textContent = "Submitting your entry…";
+      const body = {
+        name: $("name").value.trim(),
+        email: $("email").value.trim() || undefined,
+        toWhom: $("toWhom").value.trim(),
+        occasion: $("occasion").value.trim(),
+        message: $("message").value.trim() || undefined,
+        eventSlug: window.__EVENT_SLUG__,
+        streamUid,
+      };
+      const submitRes = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!submitRes.ok) {
+        const t = await submitRes.text();
+        throw new Error(`Submit failed: ${submitRes.status} ${t}`);
+      }
+      const { id } = await submitRes.json();
+      location.assign(`/thank-you?id=${encodeURIComponent(id)}`);
+    } catch (e) {
+      $("submit-status").textContent = e.message || String(e);
+      $("submit-status").classList.add("error");
+      $("submit").disabled = false;
+      $("submit").textContent = "Submit →";
+    }
+  };
+
+  function xhrPost(url, blob, contentType, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.setRequestHeader("Content-Type", contentType);
+      xhr.setRequestHeader("X-Filename", "recording." + (contentType.split("/")[1] || "webm"));
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { resolve({}); }
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText || ""}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Network error during upload — check your connection and that the Worker is reachable."));
+      xhr.send(blob);
+    });
+  }
+
+  function xhrPut(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.send(file);
+    });
+  }
+
+  async function pollReady(uid) {
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const r = await fetch(`/api/stream/${uid}/status`);
+        if (r.ok) {
+          const v = await r.json();
+          if (v.status === "ready") {
+            $("upload-bar").style.width = "100%";
+            return;
+          }
+          if (v.status === "error") {
+            throw new Error("Cloudflare Stream rejected the upload (error state).");
+          }
+        }
+      } catch (e) {
+        // Network blip — keep polling until the loop ends
+        if (i === 29) throw e;
+      }
+      $("upload-bar").style.width = `${Math.min(95, 30 + i * 2)}%`;
+    }
+    // Final check
+    const r = await fetch(`/api/stream/${uid}/status`);
+    if (!r.ok) throw new Error("Cloudflare Stream did not finish processing in time.");
+    const v = await r.json();
+    if (v.status !== "ready") throw new Error(`Stream status: ${v.status}`);
+  }
+
+  // Boot
+  setupCamera();
+  boot();
+})();
+
+// Read the event slug from the URL. Supports:
+//   /{slug}      → window.location.pathname.split("/")[1]
+//   /{slug}?slug=… → also query (legacy + admin deep links)
+//   /            → no slug — try the global default event
+function getSlugFromUrl() {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("slug")) return qs.get("slug");
+  const m = location.pathname.match(/^\/([a-z0-9-]{1,50})(?:\/|$)/);
+  if (m && !["admin", "feed", "thank-you"].includes(m[1])) return m[1];
+  // No slug in path → fall back to "default" (single-event bootstrap)
+  return "default";
+}
+
+async function boot() {
+  const slug = getSlugFromUrl();
+  // Update the "Are you the host?" link to point at this event's admin
+  const hostLink = document.getElementById("host-link");
+  if (hostLink) {
+    hostLink.href = slug ? `/${encodeURIComponent(slug)}/admin` : "/admin";
+  }
+  // Update the "Watch the messages" link to point at this event's feed
+  const feedLink = document.getElementById("feed-link");
+  if (feedLink) {
+    feedLink.href = slug ? `/${encodeURIComponent(slug)}/feed` : "/feed";
+  }
+  if (!slug) return;
+  window.__EVENT_SLUG__ = slug;
+  try {
+    const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
+    if (!res.ok) return;
+    const event = await res.json();
+    applyEventBranding(event);
+    if (event.status === "closed") {
+      const allInputs = document.querySelectorAll('#step-details input, #step-details textarea, #step-details button');
+      allInputs.forEach((el) => { el.disabled = true; });
+      const note = document.createElement("p");
+      note.style.cssText = "color: var(--bad); font-weight: 600; margin-top: 12px;";
+      note.textContent = "The host has closed this event to new submissions.";
+      document.querySelector("#step-details")?.appendChild(note);
+    }
+  } catch (e) {
+    console.warn("event load failed", e);
+  }
+}
+
+function applyEventBranding(event) {
+  // Header text
+  const h1 = document.querySelector("header h1");
+  if (h1) h1.textContent = event.name;
+  const sub = document.querySelector("header p");
+  if (sub) sub.textContent = event.welcomeMessage;
+  // Theme color → CSS variable
+  if (event.themeColor) {
+    document.documentElement.style.setProperty("--gold", event.themeColor);
+    document.documentElement.style.setProperty("--gold-deep", shadeColor(event.themeColor, -20));
+  }
+  // Update the "toWhom" placeholder to the event name
+  const toWhomInput = document.getElementById("toWhom");
+  if (toWhomInput) toWhomInput.placeholder = `e.g. ${event.name}`;
+  // Update default occasion text
+  const occInput = document.getElementById("occasion");
+  if (occInput && !occInput.value) occInput.placeholder = event.occasion;
+  // Hero image
+  const wrap = document.getElementById("header-image-wrap");
+  const img = document.getElementById("header-image");
+  if (event.headerImage) {
+    img.src = event.headerImage;
+    img.alt = event.name;
+    wrap.classList.remove("hidden");
+  } else {
+    wrap.classList.add("hidden");
+  }
+  // YouTube promo block (the "See it in action" embed above the form)
+  applyPromoEmbed(event.promoVideoId);
+}
+
+/**
+ * Render the YouTube embed into the "See it in action" promo block.
+ * Accepts a YouTube video ID (11 chars) or undefined. Uses
+ * youtube-nocookie.com + lazy-loading to keep the page lightweight.
+ */
+function applyPromoEmbed(videoId) {
+  const wrap = document.getElementById("promo-block");
+  const inner = document.getElementById("promo-embed-inner");
+  if (!wrap || !inner) return;
+  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    wrap.classList.add("hidden");
+    inner.innerHTML = "";
+    return;
+  }
+  // Idempotent — only inject once per video
+  if (inner.dataset.videoId === videoId) return;
+  const src = `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0`;
+  inner.innerHTML = `<iframe src="${src}" title="Demo video" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  inner.dataset.videoId = videoId;
+  wrap.classList.remove("hidden");
+}
+
+function shadeColor(hex, percent) {
+  // Darken/lighten a hex color by `percent` (-100 to 100).
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + percent));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
+  const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+</script>
+</body>
+</html>

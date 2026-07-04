@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TheMediaBox · Owner</title>
+<style>
+  :root { --gold: #c9a14a; --gold-deep: #a17a25; --ink: #1a1a1a; --muted: #5a5a5a; --paper: #fbf7ef; --line: #e6dfd0; --ok: #0a7a3a; --bad: #b00020; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: var(--paper); color: var(--ink); margin: 0; }
+  header { background: #fff; border-bottom: 1px solid var(--line); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .spacer { flex: 1; }
+  main { max-width: 1100px; margin: 24px auto; padding: 0 20px 80px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tabs button { background: transparent; border: 0; padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
+  .tabs button.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 200px 1fr auto; gap: 16px; align-items: center; }
+  .card .thumb {
+    background: #000;
+    border-radius: 8px;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    position: relative;
+  }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .thumb .watch-link {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .card .thumb .watch-link:hover { background: rgba(201, 161, 74, 0.95); }
+  .card .meta h3 { margin: 0 0 4px; font-size: 16px; }
+  .card .meta p { margin: 0; color: var(--muted); font-size: 13px; }
+  .card .actions { display: flex; flex-direction: column; gap: 6px; }
+  .card .actions button { padding: 8px 14px; font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  button.primary { background: var(--gold); border-color: var(--gold-deep); }
+  button.primary:hover { background: var(--gold-deep); color: #fff; }
+  button.danger { color: var(--bad); border-color: #f4c0c0; }
+  button.danger:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+  button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .crest { font-size: 48px; margin-bottom: 12px; }
+
+  .login-card { max-width: 380px; margin: 80px auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 32px; text-align: center; }
+  .login-card h2 { margin: 0 0 8px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .login-card input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
+  .login-card button { width: 100%; padding: 10px; }
+  .login-card a:hover { background: var(--paper); }
+  .login-card a:hover span { color: var(--ink) !important; }
+
+  /* Event settings form */
+  .form-row label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .form-row input, .form-row textarea, .form-row select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; font-family: inherit; width: 100%; max-width: 480px; }
+  .form-row input[type=color] { width: 80px; height: 36px; padding: 2px; }
+
+  .hidden { display: none !important; }
+
+  .signin-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .signin-block label { font-size: 12px; color: var(--muted); font-weight: 600; text-align: left; }
+</style>
+</head>
+<body>
+<header>
+  <a id="brand-link" href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+    <h1 style="margin: 0;">✦ <span id="header-event-name">TheMediaBox · Guest Book</span></h1>
+  </a>
+  <div class="spacer"></div>
+  <a id="view-public-link" href="/" target="_blank" style="font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 6px;">↗ View public page</a>
+  <span id="user-email" style="font-size: 13px; color: var(--muted); margin-left: 4px;"></span>
+  <button id="logout-btn" class="hidden">Sign out</button>
+</header>
+
+<main>
+  <!-- Login panel -->
+  <div id="login-panel" class="login-card">
+    <h2 id="login-title">Owner sign in</h2>
+    <p id="login-sub">Sign in with your Google account. Only the configured owner can moderate.</p>
+    <div id="event-picker" class="hidden" style="margin-bottom: 16px;">
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Select an event to manage:</p>
+      <div id="event-picker-list"></div>
+    </div>
+    <div class="signin-block">
+      <label for="email-input">Email</label>
+      <input id="email-input" type="email" placeholder="you@gmail.com" />
+    </div>
+    <div class="signin-block">
+      <label for="password-input">Password</label>
+      <input id="password-input" type="password" placeholder="••••••••" />
+    </div>
+    <button class="primary" id="signin-btn">Sign in</button>
+    <p id="login-status" style="font-size: 12px; color: var(--bad); margin-top: 12px; min-height: 1.4em;"></p>
+  </div>
+
+  <!-- Moderation panel (after sign-in) -->
+  <div id="mod-panel" class="hidden">
+    <div id="verify-banner" class="hidden" style="background: #fff4e0; border: 1px solid #f0c46e; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+      <strong>Email not verified.</strong> You'll be able to sign in but moderation actions are disabled until you verify your email.
+      <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+        <button id="send-verify-btn">Send verification email</button>
+        <span id="verify-status" style="font-size: 13px; color: var(--muted);"></span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button data-tab="moderation" class="active">Moderation</button>
+      <button data-tab="event">Event settings</button>
+    </div>
+
+    <!-- Moderation tab -->
+    <div id="tab-moderation">
+      <div class="subtabs" style="display: flex; gap: 4px; margin-bottom: 12px;">
+        <button data-status="pending" class="active subtab">Pending</button>
+        <button data-status="approved" class="subtab">Approved</button>
+        <button data-status="rejected" class="subtab">Rejected</button>
+      </div>
+      <div id="list" class="row"></div>
+    </div>
+
+    <!-- Event settings tab -->
+    <div id="tab-event" class="hidden">
+      <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">
+        Edit the event's branding and settings. Changes apply immediately to the public page.
+      </p>
+      <div id="event-form-status" style="font-size: 13px; color: var(--muted); margin-bottom: 12px;"></div>
+      <div class="form-row"><label>Event name</label><input id="ev-name" maxlength="120" /></div>
+      <div class="form-row"><label>Slug (URL)</label>
+        <input id="ev-slug" maxlength="50" pattern="[a-z0-9\-]+" disabled title="Slug cannot be changed" />
+      </div>
+      <div class="form-row"><label>Occasion</label><input id="ev-occasion" maxlength="80" placeholder="e.g. Wedding" /></div>
+      <div class="form-row"><label>Date</label><input id="ev-date" type="date" /></div>
+      <div class="form-row"><label>Welcome message</label>
+        <textarea id="ev-welcome" maxlength="500" rows="3"></textarea>
+      </div>
+      <div class="form-row"><label>Theme color</label>
+        <input id="ev-color" type="color" />
+      </div>
+      <div class="form-row"><label>Header image URL (optional)</label>
+        <input id="ev-image" maxlength="500" placeholder="https://..." />
+      </div>
+      <div class="form-row"><label>Promo video (YouTube)</label>
+        <input id="ev-promo" maxlength="500" placeholder="https://youtube.com/watch?v=... or just the 11-char ID" />
+        <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">Embedded above the form on the public page. Accepts a full YouTube URL or just the video ID.</p>
+      </div>
+      <div class="form-row"><label>Status</label>
+        <select id="ev-status">
+          <option value="open">Open (accepting submissions)</option>
+          <option value="closed">Closed (no new submissions)</option>
+        </select>
+      </div>
+      <div class="controls" style="justify-content: flex-start;">
+        <button class="primary" id="ev-save">Save changes</button>
+        <a id="ev-public-link" class="primary" target="_blank" style="text-decoration: none;">View public page</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Firebase compat SDK (loaded from gstatic; we use the modular API via dynamic import) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBexCqxBTBo9M3xa2JLp1SiWFQd5NzDteI",
+    authDomain: "themediabox-guestbook.firebaseapp.com",
+    projectId: "themediabox-guestbook",
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Resolve the event slug from the URL. Supports:
+  //   /{slug}/admin       (recommended)  → location.pathname.split("/")[1]
+  //   /admin?slug={slug}  (legacy / link share)
+  //   /admin              (no slug)     → show "select an event" prompt
+  const _qsSlug = new URLSearchParams(location.search).get("slug");
+  const _pathMatch = location.pathname.match(/^\/([a-z0-9-]{1,50})\/admin/);
+  window.__EVENT_SLUG__ = _qsSlug || (_pathMatch ? _pathMatch[1] : null) || "default";
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => $(id).classList.remove("hidden");
+  const hide = (id) => $(id).classList.add("hidden");
+
+  let currentStatus = "pending";
+
+  $("signin-btn").onclick = async () => {
+    const email = $("email-input").value.trim();
+    const password = $("password-input").value;
+    if (!email || !password) {
+      $("login-status").textContent = "Email and password required.";
+      return;
+    }
+    $("login-status").textContent = "";
+    $("signin-btn").disabled = true;
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Login failed: ${res.status}`);
+      }
+      const loginData = await res.json();
+      onSignedIn(cred.user.email, loginData.emailVerified);
+    } catch (e) {
+      $("login-status").textContent = e.message || String(e);
+    } finally {
+      $("signin-btn").disabled = false;
+    }
+  };
+
+  $("send-verify-btn").onclick = async () => {
+    $("send-verify-btn").disabled = true;
+    $("verify-status").textContent = "Sending…";
+    $("verify-status").classList.remove("ok", "error");
+    try {
+      const res = await fetch("/api/admin/send-verification", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Failed: ${res.status}`);
+      }
+      $("verify-status").textContent = "Verification email sent — check your inbox and click the link.";
+      $("verify-status").classList.add("ok");
+    } catch (e) {
+      $("verify-status").textContent = e.message || String(e);
+      $("verify-status").classList.add("error");
+    } finally {
+      $("send-verify-btn").disabled = false;
+    }
+  };
+
+  $("logout-btn").onclick = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    await signOut(auth);
+    hide("mod-panel");
+    show("login-panel");
+    hide("logout-btn");
+    $("user-email").textContent = "";
+  };
+
+  // Top-level tab handlers (Moderation / Event settings)
+  document.querySelectorAll('.tabs button[data-tab]').forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tabs button[data-tab]').forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const tab = btn.dataset.tab;
+      hide("tab-moderation");
+      hide("tab-event");
+      show(`tab-${tab}`);
+      if (tab === "event") loadEventForm();
+    };
+  });
+
+  // Sub-tab handlers (Pending / Approved / Rejected inside Moderation)
+  document.querySelectorAll(".subtab").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll(".subtab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentStatus = btn.dataset.status;
+      load();
+    };
+  });
+
+  // Event settings form
+  $("ev-save").onclick = saveEventForm;
+
+  // Event picker for /admin (no slug)
+  if (!window.__EVENT_SLUG__) {
+    (async () => {
+      try {
+        const res = await fetch("/api/events");
+        const { events } = await res.json();
+        if (events && events.length) {
+          show("event-picker");
+          const list = $("event-picker-list");
+          list.innerHTML = events.map((e) =>
+            `<a href="/${encodeURIComponent(e.slug)}/admin" style="display: block; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 6px; text-decoration: none; color: var(--ink); font-weight: 600;">${escapeHtml(e.name)} <span style="color: var(--muted); font-weight: 400;">/ ${escapeHtml(e.slug)}</span></a>`
+          ).join("");
+        }
+      } catch {}
+    })();
+  }
+
+  function onSignedIn(email, emailVerified) {
+    $("user-email").textContent = email + (emailVerified ? "" : " (unverified)");
+    show("logout-btn");
+    hide("login-panel");
+    show("mod-panel");
+    if (!emailVerified) {
+      show("verify-banner");
+    } else {
+      hide("verify-banner");
+    }
+    load();
+    loadEventForm();
+  }
+
+  async function load() {
+    const list = $("list");
+    list.innerHTML = `<div class="empty"><div class="crest">⏳</div>Loading…</div>`;
+    const url = `/api/admin/guests?status=${currentStatus}&limit=200` +
+      (window.__EVENT_SLUG__ ? `&eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "");
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) {
+      list.innerHTML = `<div class="empty"><div class="crest">⚠</div>Failed to load: ${res.status}</div>`;
+      return;
+    }
+    const { guests } = await res.json();
+    if (!guests.length) {
+      list.innerHTML = `<div class="empty"><div class="crest">✦</div>No ${currentStatus} entries.</div>`;
+      return;
+    }
+    list.innerHTML = "";
+    for (const g of guests) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="thumb">
+          <img src="${g.streamThumbnailUrl || ''}" alt="" loading="lazy" />
+          <a class="watch-link" href="${g.streamWatchUrl || '#'}" target="_blank" rel="noopener">▶ Watch</a>
+        </div>
+        <div class="meta">
+          <h3>${escapeHtml(g.name)} → ${escapeHtml(g.toWhom)}</h3>
+          <p><strong>${escapeHtml(g.occasion)}</strong> · ${Math.round(g.durationSeconds || 0)}s · ${new Date(g.createdAt).toLocaleString()}</p>
+          ${g.message ? `<p style="margin-top: 6px; color: var(--ink); font-style: italic;">"${escapeHtml(g.message)}"</p>` : ""}
+        </div>
+        <div class="actions"></div>
+      `;
+      const actions = card.querySelector(".actions");
+
+      if (currentStatus === "pending") {
+        const approve = document.createElement("button");
+        approve.className = "primary";
+        approve.textContent = "✓ Approve";
+        approve.onclick = () => moderate(g.id, "approve", approve);
+        const reject = document.createElement("button");
+        reject.className = "danger";
+        reject.textContent = "✕ Reject";
+        reject.onclick = () => moderate(g.id, "reject", reject);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(approve, reject, del);
+      } else if (currentStatus === "approved") {
+        const reject = document.createElement("button");
+        reject.className = "danger";
+        reject.textContent = "✕ Unapprove";
+        reject.onclick = () => moderate(g.id, "reject", reject);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(reject, del);
+      } else {
+        const approve = document.createElement("button");
+        approve.className = "primary";
+        approve.textContent = "✓ Approve";
+        approve.onclick = () => moderate(g.id, "approve", approve);
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "Delete";
+        del.onclick = () => del0(g.id, del);
+        actions.append(approve, del);
+      }
+      list.appendChild(card);
+    }
+  }
+
+  async function moderate(id, action, btn) {
+    btn.disabled = true;
+    const qp = window.__EVENT_SLUG__ ? `?eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "";
+    const res = await fetch(`/api/admin/guests/${id}/${action}${qp}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: action === "reject" ? JSON.stringify({ reason: "" }) : "{}",
+    });
+    if (!res.ok) {
+      alert(`Failed: ${res.status}`);
+      btn.disabled = false;
+      return;
+    }
+    load();
+  }
+
+  async function del0(id, btn) {
+    if (!confirm("Delete this entry and its video?")) return;
+    btn.disabled = true;
+    const qp = window.__EVENT_SLUG__ ? `?eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "";
+    const res = await fetch(`/api/admin/guests/${id}${qp}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert(`Failed: ${res.status}`);
+      btn.disabled = false;
+      return;
+    }
+    load();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // Firebase Auth state listener — fires on sign-in AND on token refresh
+  // (which happens automatically every ~55 min, OR immediately after the
+  // user verifies their email and Firebase issues a new token). On any
+  // change, re-exchange the ID token with the Worker so the session cookie
+  // reflects the latest claims (especially email_verified).
+  import("https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js").then(({ onIdTokenChanged }) => {
+    onIdTokenChanged(auth, async (user) => {
+      if (!user) return;
+      try {
+        const idToken = await user.getIdToken(true); // force refresh
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          onSignedIn(user.email, data.emailVerified);
+        }
+      } catch {}
+    });
+  });
+
+  // ── Event settings form ─────────────────────────────────────
+  async function loadEventForm() {
+    if (!window.__EVENT_SLUG__) {
+      $("event-form-status").textContent = "Open this page with a specific event slug (e.g. /admin?slug=demo) to edit it.";
+      return;
+    }
+    try {
+      const res = await fetch(`/api/events/${encodeURIComponent(window.__EVENT_SLUG__)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ev = await res.json();
+      $("ev-name").value = ev.name || "";
+      $("ev-slug").value = ev.slug || "";
+      $("ev-occasion").value = ev.occasion || "";
+      $("ev-date").value = ev.date || "";
+      $("ev-welcome").value = ev.welcomeMessage || "";
+      $("ev-color").value = ev.themeColor || "#c9a14a";
+      $("ev-image").value = ev.headerImage || "";
+      $("ev-promo").value = ev.promoVideoId || "";
+      $("ev-status").value = ev.status || "open";
+      $("ev-public-link").href = `/${encodeURIComponent(ev.slug)}`;
+      // Update the top header to show the event name + link to public
+      const headerName = document.getElementById("header-event-name");
+      if (headerName) headerName.textContent = ev.name;
+      const brandLink = document.getElementById("brand-link");
+      if (brandLink) brandLink.href = `/${encodeURIComponent(ev.slug)}`;
+      const viewPublic = document.getElementById("view-public-link");
+      if (viewPublic) viewPublic.href = `/${encodeURIComponent(ev.slug)}`;
+      // Page title
+      document.title = `${ev.name} · Admin`;
+      $("event-form-status").textContent = "";
+    } catch (e) {
+      $("event-form-status").textContent = "Couldn't load event: " + (e.message || e);
+    }
+  }
+
+  async function saveEventForm() {
+    if (!window.__EVENT_SLUG__) return;
+    $("ev-save").disabled = true;
+    $("ev-save").textContent = "Saving…";
+    try {
+      const body = {
+        name: $("ev-name").value.trim(),
+        occasion: $("ev-occasion").value.trim(),
+        date: $("ev-date").value,
+        welcomeMessage: $("ev-welcome").value.trim(),
+        themeColor: $("ev-color").value,
+        headerImage: $("ev-image").value.trim() || undefined,
+        promoVideoId: $("ev-promo").value.trim() || undefined,
+        status: $("ev-status").value,
+      };
+      const res = await fetch(`/api/admin/events/${encodeURIComponent(window.__EVENT_SLUG__)}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+      $("event-form-status").textContent = "Saved ✓";
+      setTimeout(() => ($("event-form-status").textContent = ""), 2000);
+    } catch (e) {
+      $("event-form-status").textContent = "Save failed: " + (e.message || e);
+    } finally {
+      $("ev-save").disabled = false;
+      $("ev-save").textContent = "Save changes";
+    }
+  }
+</script>
+</body>
+</html>
