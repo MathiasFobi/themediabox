@@ -73,9 +73,12 @@
 </head>
 <body>
 <header>
-  <h1>✦ TheMediaBox · Guest Book</h1>
+  <a id="brand-link" href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+    <h1 style="margin: 0;">✦ <span id="header-event-name">TheMediaBox · Guest Book</span></h1>
+  </a>
   <div class="spacer"></div>
-  <span id="user-email" style="font-size: 13px; color: var(--muted);"></span>
+  <a id="view-public-link" href="/" target="_blank" style="font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 6px;">↗ View public page</a>
+  <span id="user-email" style="font-size: 13px; color: var(--muted); margin-left: 4px;"></span>
   <button id="logout-btn" class="hidden">Sign out</button>
 </header>
 
@@ -456,6 +459,15 @@
       $("ev-image").value = ev.headerImage || "";
       $("ev-status").value = ev.status || "open";
       $("ev-public-link").href = `/${encodeURIComponent(ev.slug)}`;
+      // Update the top header to show the event name + link to public
+      const headerName = document.getElementById("header-event-name");
+      if (headerName) headerName.textContent = ev.name;
+      const brandLink = document.getElementById("brand-link");
+      if (brandLink) brandLink.href = `/${encodeURIComponent(ev.slug)}`;
+      const viewPublic = document.getElementById("view-public-link");
+      if (viewPublic) viewPublic.href = `/${encodeURIComponent(ev.slug)}`;
+      // Page title
+      document.title = `${ev.name} · Admin`;
       $("event-form-status").textContent = "";
     } catch (e) {
       $("event-form-status").textContent = "Couldn't load event: " + (e.message || e);

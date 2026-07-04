@@ -11,7 +11,9 @@
   h1 { font-size: 32px; margin: 0 0 12px; }
   p { color: #5a5a5a; line-height: 1.6; }
   .ref { margin-top: 24px; padding: 12px 16px; background: #fff; border: 1px solid #e6dfd0; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 13px; color: #5a5a5a; display: inline-block; }
-  a { color: #a17a25; }
+  a { color: #a17a25; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .links { margin-top: 32px; display: flex; gap: 16px; justify-content: center; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -20,14 +22,21 @@
   <h1>Thank you 💛</h1>
   <p>Your message has been submitted. The hosts will review and approve it shortly — you'll know when it goes live.</p>
   <div class="ref" id="ref">Entry ID: —</div>
-  <p style="margin-top: 32px;"><a id="back-link" href="/">← Back to the event</a></p>
+  <div class="links">
+    <a id="back-link" href="/">← Back to the event</a>
+    <a id="host-link" href="/admin" style="color: var(--muted); font-size: 12px;">Are you the host?</a>
+  </div>
 </main>
 <script>
   const id = new URLSearchParams(location.search).get("id");
   if (id) document.getElementById("ref").textContent = `Entry ID: ${id}`;
   // Back link: prefer returning to the same event, fallback to root
   const m = location.pathname.match(/^\/([a-z0-9-]{1,50})\/thank-you/);
-  if (m) document.getElementById("back-link").href = `/${m[1]}`;
+  if (m) {
+    const slug = m[1];
+    document.getElementById("back-link").href = `/${slug}`;
+    document.getElementById("host-link").href = `/${slug}/admin`;
+  }
 </script>
 </body>
 </html>

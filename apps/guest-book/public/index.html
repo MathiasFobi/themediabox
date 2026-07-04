@@ -16,10 +16,16 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: ui-serif, Georgia, "Times New Roman", serif; }
   main { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
-  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; position: relative; }
   header .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
   header h1 { font-size: 36px; margin: 8px 0 4px; font-weight: 700; }
   header p { color: var(--muted); margin: 0; }
+  header .host-link {
+    position: absolute; top: 8px; right: 0;
+    font-size: 12px; color: var(--muted); text-decoration: none;
+    padding: 6px 10px; border-radius: 6px;
+  }
+  header .host-link:hover { color: var(--gold-deep); background: rgba(201, 161, 74, 0.08); }
 
   .step { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
   .step h2 { margin: 0 0 12px; font-size: 20px; color: var(--ink); }
@@ -142,6 +148,7 @@
 <main>
   <header id="page-header">
     <div class="eyebrow">✦ TheMediaBox</div>
+    <a id="host-link" class="host-link" href="/admin">Are you the host? Sign in →</a>
     <h1>Video Guest Book</h1>
     <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
     <div class="header-image-wrap hidden" id="header-image-wrap">
@@ -486,6 +493,11 @@ function getSlugFromUrl() {
 
 async function boot() {
   const slug = getSlugFromUrl();
+  // Update the "Are you the host?" link to point at this event's admin
+  const hostLink = document.getElementById("host-link");
+  if (hostLink) {
+    hostLink.href = slug ? `/${encodeURIComponent(slug)}/admin` : "/admin";
+  }
   if (!slug) {
     // No slug — render an event picker from /api/events
     const intro = document.getElementById("feed-intro");
