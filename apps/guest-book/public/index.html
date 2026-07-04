@@ -116,14 +116,34 @@
   .feed-card .meta .sub { font-size: 11px; color: var(--muted); }
   .feed-card .meta .msg { font-size: 12px; color: var(--ink); margin-top: 4px; font-style: italic; }
   .feed-empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
+
+  /* Hero image (event.headerImage) */
+  .header-image-wrap {
+    margin: 20px auto 0;
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--line);
+    aspect-ratio: 16/6;
+    max-height: 240px;
+  }
+  .header-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 </style>
 </head>
 <body>
 <main>
-  <header>
+  <header id="page-header">
     <div class="eyebrow">✦ TheMediaBox</div>
     <h1>Video Guest Book</h1>
     <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
+    <div class="header-image-wrap hidden" id="header-image-wrap">
+      <img id="header-image" alt="" />
+    </div>
   </header>
 
   <section class="step hidden" id="step-details">
@@ -540,6 +560,16 @@ function applyEventBranding(event) {
   // Update default occasion text
   const occInput = document.getElementById("occasion");
   if (occInput && !occInput.value) occInput.placeholder = event.occasion;
+  // Hero image
+  const wrap = document.getElementById("header-image-wrap");
+  const img = document.getElementById("header-image");
+  if (event.headerImage) {
+    img.src = event.headerImage;
+    img.alt = event.name;
+    wrap.classList.remove("hidden");
+  } else {
+    wrap.classList.add("hidden");
+  }
 }
 
 function shadeColor(hex, percent) {
