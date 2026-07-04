@@ -116,6 +116,98 @@
     object-fit: cover;
     display: block;
   }
+
+  /* Landing-page hero */
+  .hero-cta {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 14px 32px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--gold-deep);
+    transition: transform 0.05s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .hero-cta:hover { background: var(--gold-deep); color: #fff; box-shadow: 0 2px 0 var(--line); }
+  .hero-cta:active { transform: translateY(1px); }
+
+  /* "How it works" 3-step strip */
+  .how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .how-step {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .how-step .num {
+    display: inline-block;
+    width: 32px; height: 32px;
+    line-height: 32px;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 50%;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .how-step h3 { margin: 0 0 4px; font-size: 14px; }
+  .how-step p { margin: 0; font-size: 12px; color: var(--muted); }
+
+  /* "Watch first" promo block */
+  .promo-block {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 0 0 20px;
+    text-align: center;
+  }
+  .promo-block h2 { margin: 0 0 4px; font-size: 22px; }
+  .promo-block .sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+  .promo-embed {
+    margin: 0 -8px;
+    background: #000;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+  .promo-embed-inner {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+  }
+  .promo-embed-inner iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  .promo-block .promo-cta {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--gold-deep);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .promo-block .promo-cta:hover { background: var(--gold-deep); color: #fff; }
 </style>
 </head>
 <body>
@@ -125,18 +217,50 @@
     <a id="host-link" class="host-link" href="/admin">Are you the host? Sign in →</a>
     <h1>Video Guest Book</h1>
     <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
+    <a class="hero-cta" href="#record">✦ Record your message</a>
     <div class="header-image-wrap hidden" id="header-image-wrap">
       <img id="header-image" alt="" />
     </div>
   </header>
 
-  <section class="step" id="step-details">
-    <h2>1 · Your details</h2>
-    <p>Tell us a little about yourself so the hosts know who the message is from.</p>
-    <div class="form-row">
-      <label for="name">Your name *</label>
-      <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
+  <!-- How it works: 3 steps -->
+  <section class="how-it-works" aria-label="How it works">
+    <div class="how-step">
+      <div class="num">1</div>
+      <h3>Tell us who</h3>
+      <p>Your name and who the message is for</p>
     </div>
+    <div class="how-step">
+      <div class="num">2</div>
+      <h3>Record your video</h3>
+      <p>Up to 3 minutes, right from your phone</p>
+    </div>
+    <div class="how-step">
+      <div class="num">3</div>
+      <h3>Done</h3>
+      <p>The host reviews and approves your message</p>
+    </div>
+  </section>
+
+  <!-- Watch the demo (YouTube) — hidden when no promoVideoId is set -->
+  <section class="promo-block hidden" id="promo-block">
+    <h2>See it in action</h2>
+    <p class="sub">Watch a quick demo, then record your own below.</p>
+    <div class="promo-embed">
+      <div class="promo-embed-inner" id="promo-embed-inner"></div>
+    </div>
+    <a class="promo-cta" href="#record">Now record your own ↓</a>
+  </section>
+
+  <section class="step" id="record">
+    <h2 id="record-title">Record your message</h2>
+    <p>Fill in your details below, then record a short video. You can re-record as many times as you like.</p>
+    <!-- step-details is now inside the record block -->
+    <div id="step-details">
+      <div class="form-row">
+        <label for="name">Your name *</label>
+        <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
+      </div>
     <div class="form-row">
       <label for="email">Email <span style="font-weight: 400;">(optional — for the hosts to follow up)</span></label>
       <input id="email" name="email" type="email" maxlength="200" placeholder="linda@example.com" />
@@ -156,6 +280,7 @@
     <div class="controls">
       <button class="primary" id="next-1">Next: record your video →</button>
     </div>
+    </div><!-- /step-details -->
   </section>
 
   <section class="step hidden" id="step-record">
@@ -510,6 +635,30 @@ function applyEventBranding(event) {
   } else {
     wrap.classList.add("hidden");
   }
+  // YouTube promo block (the "See it in action" embed above the form)
+  applyPromoEmbed(event.promoVideoId);
+}
+
+/**
+ * Render the YouTube embed into the "See it in action" promo block.
+ * Accepts a YouTube video ID (11 chars) or undefined. Uses
+ * youtube-nocookie.com + lazy-loading to keep the page lightweight.
+ */
+function applyPromoEmbed(videoId) {
+  const wrap = document.getElementById("promo-block");
+  const inner = document.getElementById("promo-embed-inner");
+  if (!wrap || !inner) return;
+  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    wrap.classList.add("hidden");
+    inner.innerHTML = "";
+    return;
+  }
+  // Idempotent — only inject once per video
+  if (inner.dataset.videoId === videoId) return;
+  const src = `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0`;
+  inner.innerHTML = `<iframe src="${src}" title="Demo video" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  inner.dataset.videoId = videoId;
+  wrap.classList.remove("hidden");
 }
 
 function shadeColor(hex, percent) {
