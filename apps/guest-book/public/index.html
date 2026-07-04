@@ -142,6 +142,24 @@
     object-fit: cover;
     display: block;
   }
+
+  /* YouTube promo embed */
+  .promo-embed {
+    margin: 24px -20px 0;
+    background: #000;
+    overflow: hidden;
+  }
+  .promo-embed-inner {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+  }
+  .promo-embed-inner iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
 </style>
 </head>
 <body>
@@ -154,11 +172,17 @@
     <div class="header-image-wrap hidden" id="header-image-wrap">
       <img id="header-image" alt="" />
     </div>
+    <div class="promo-embed hidden" id="promo-embed">
+      <div class="promo-embed-inner" id="promo-embed-inner"></div>
+    </div>
   </header>
 
   <section class="step hidden" id="step-details">
     <h2>1 · Your details</h2>
     <p>Tell us a little about yourself so the hosts know who the message is from.</p>
+    <div class="promo-embed hidden" id="promo-embed-form" style="margin: 0 0 16px;">
+      <div class="promo-embed-inner" id="promo-embed-form-inner"></div>
+    </div>
     <div class="form-row">
       <label for="name">Your name *</label>
       <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
@@ -585,6 +609,35 @@ function applyEventBranding(event) {
   } else {
     wrap.classList.add("hidden");
   }
+  // YouTube promo embed — both in the header and in the form step
+  applyPromoEmbed(event.promoVideoId);
+}
+
+/**
+ * Render the YouTube promo embed in both the home header and the form
+ * step-details. Accepts a YouTube video ID (11 chars) or undefined.
+ * Uses youtube-nocookie.com + lazy-loading to keep the page lightweight.
+ */
+function applyPromoEmbed(videoId) {
+  const targets = [
+    { wrap: "promo-embed", inner: "promo-embed-inner" },
+    { wrap: "promo-embed-form", inner: "promo-embed-form-inner" },
+  ];
+  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    targets.forEach((t) => $(t.wrap)?.classList.add("hidden"));
+    return;
+  }
+  const src = `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0`;
+  targets.forEach((t) => {
+    const inner = $(t.inner);
+    const wrap = $(t.wrap);
+    if (!inner || !wrap) return;
+    // Only inject once per target (idempotent)
+    if (inner.dataset.videoId === videoId) return;
+    inner.innerHTML = `<iframe src="${src}" title="Promo video" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    inner.dataset.videoId = videoId;
+    wrap.classList.remove("hidden");
+  });
 }
 
 function shadeColor(hex, percent) {

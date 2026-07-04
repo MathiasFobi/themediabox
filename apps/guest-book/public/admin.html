@@ -148,6 +148,10 @@
       <div class="form-row"><label>Header image URL (optional)</label>
         <input id="ev-image" maxlength="500" placeholder="https://..." />
       </div>
+      <div class="form-row"><label>Promo video (YouTube)</label>
+        <input id="ev-promo" maxlength="500" placeholder="https://youtube.com/watch?v=... or just the 11-char ID" />
+        <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">Embedded above the form on the public page. Accepts a full YouTube URL or just the video ID.</p>
+      </div>
       <div class="form-row"><label>Status</label>
         <select id="ev-status">
           <option value="open">Open (accepting submissions)</option>
@@ -457,6 +461,7 @@
       $("ev-welcome").value = ev.welcomeMessage || "";
       $("ev-color").value = ev.themeColor || "#c9a14a";
       $("ev-image").value = ev.headerImage || "";
+      $("ev-promo").value = ev.promoVideoId || "";
       $("ev-status").value = ev.status || "open";
       $("ev-public-link").href = `/${encodeURIComponent(ev.slug)}`;
       // Update the top header to show the event name + link to public
@@ -486,6 +491,7 @@
         welcomeMessage: $("ev-welcome").value.trim(),
         themeColor: $("ev-color").value,
         headerImage: $("ev-image").value.trim() || undefined,
+        promoVideoId: $("ev-promo").value.trim() || undefined,
         status: $("ev-status").value,
       };
       const res = await fetch(`/api/admin/events/${encodeURIComponent(window.__EVENT_SLUG__)}`, {

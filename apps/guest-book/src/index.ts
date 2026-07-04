@@ -583,6 +583,11 @@ app.put(
       return err("Not the owner of this event", 403);
     }
     const body = (await c.req.json().catch(() => ({}))) as Partial<Event>;
+    // Normalize promoVideoId: accept either a raw ID (e.g. "IiUXbBIc2ZI") or
+    // a full YouTube URL — extract the 11-char ID.
+    const promoIdRaw = body.promoVideoId?.trim() || "";
+    const promoIdMatch = promoIdRaw.match(/(?:v=|\/)([A-Za-z0-9_-]{11})(?:[?&#]|$)/);
+    const promoVideoId = promoIdMatch ? promoIdMatch[1] : (promoIdRaw || undefined);
     const updated: Event = {
       ...existing,
       name: body.name?.trim() || existing.name,
@@ -592,6 +597,8 @@ app.put(
       themeColor: body.themeColor?.trim() || existing.themeColor,
       headerImage:
         body.headerImage !== undefined ? body.headerImage?.trim() || undefined : existing.headerImage,
+      promoVideoId:
+        body.promoVideoId !== undefined ? (promoVideoId || undefined) : existing.promoVideoId,
       status: body.status === "closed" || body.status === "open" ? body.status : existing.status,
     };
     await upsertEvent(c.env, PROJECT_ID, updated, { useAdmin: true });

@@ -53,6 +53,7 @@ export interface Event {
   welcomeMessage: string;  // longer intro text, e.g. "Leave a heartfelt message..."
   themeColor: string;      // hex color, default "#c9a14a" gold
   headerImage?: string;    // optional URL to a hero image
+  promoVideoId?: string;   // YouTube video ID (e.g. "dQw4w9WgXcQ") — rendered as an iframe
   status: "open" | "closed"; // closed = form disabled, feed still visible
   createdAt: number;       // epoch ms
   ownerEmail: string;
