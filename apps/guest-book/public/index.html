@@ -314,9 +314,10 @@
     <div class="status" id="submit-status">When you submit, your video uploads to Cloudflare Stream and a pending entry is created.</div>
   </section>
 
-  <!-- Footer with link to the main site -->
+  <!-- Footer with link to the main site + a link to the public feed -->
   <footer style="text-align: center; padding: 32px 0 16px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); margin-top: 32px;">
-    <p>More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">themediabox.vercel.app</a></p>
+    <p>Watch the messages → <a id="feed-link" href="/feed" style="color: var(--gold-deep); font-weight: 600;">/feed</a></p>
+    <p style="margin-top: 6px;">More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">themediabox.vercel.app</a></p>
   </footer>
 </main>
 
@@ -580,14 +581,17 @@ function getSlugFromUrl() {
 }
 
 async function boot() {
+  const slug = getSlugFromUrl();
   // Update the "Are you the host?" link to point at this event's admin
   const hostLink = document.getElementById("host-link");
   if (hostLink) {
-    const slug = getSlugFromUrl();
     hostLink.href = slug ? `/${encodeURIComponent(slug)}/admin` : "/admin";
   }
-  // Load event details for branding
-  const slug = getSlugFromUrl();
+  // Update the "Watch the messages" link to point at this event's feed
+  const feedLink = document.getElementById("feed-link");
+  if (feedLink) {
+    feedLink.href = slug ? `/${encodeURIComponent(slug)}/feed` : "/feed";
+  }
   if (!slug) return;
   window.__EVENT_SLUG__ = slug;
   try {

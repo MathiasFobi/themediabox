@@ -855,7 +855,7 @@ app.delete(
 // read it from `location.search` (or location.pathname).
 // ─────────────────────────────────────────────────────────────────────────
 
-const SLUG_RE = /^\/([a-z0-9-]{1,50})(?:\/(admin|thank-you))?\/?$/;
+const SLUG_RE = /^\/([a-z0-9-]{1,50})(?:\/(admin|thank-you|feed))?\/?$/;
 
 app.get("/", (c) => c.env.ASSETS.fetch(new URL("/index.html", c.req.url)));
 
@@ -879,6 +879,13 @@ app.get("/:slug/thank-you", (c) => {
   const slug = c.req.param("slug");
   if (!SLUG_RE.test(`/${slug}/thank-you`)) return err("Not found", 404);
   return c.env.ASSETS.fetch(new URL(`/thank-you.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
+// Public feed — separate from the form. Shows approved messages.
+app.get("/:slug/feed", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/feed`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/feed.html?slug=${encodeURIComponent(slug)}`, c.req.url));
 });
 
 // ─────────────────────────────────────────────────────────────────────────
