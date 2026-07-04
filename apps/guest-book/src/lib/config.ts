@@ -35,6 +35,7 @@ export interface GuestBook {
   streamUid: string;     // Cloudflare Stream UID
   streamPlaybackUrl: string; // https://customer-...cloudflarestream.com/<uid>/manifest/video.m3u8
   streamThumbnailUrl?: string;
+  streamWatchUrl?: string;    // https://customer-...cloudflarestream.com/<uid>/watch (browser-agnostic)
   durationSeconds: number;
   status: "pending" | "approved" | "rejected";
   createdAt: number;     // epoch ms

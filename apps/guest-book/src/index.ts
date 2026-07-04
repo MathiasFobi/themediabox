@@ -373,6 +373,14 @@ app.post("/api/guests", async (c) => {
   }
 
   // 2) Build the guest row
+  // Derive a "watch" URL from the playback URL so the admin UI can preview
+  // the video in a browser-agnostic iframe (browsers other than Safari
+  // don't play raw HLS in <video> without hls.js).
+  //   playbackUrl: https://customer-<hash>.cloudflarestream.com/<uid>/manifest/video.m3u8
+  //   watchUrl:    https://customer-<hash>.cloudflarestream.com/<uid>/watch
+  const m = stream.playbackUrl?.match(/^(https:\/\/customer-[^.]+\.cloudflarestream\.com)\/[^/]+\//);
+  const streamWatchUrl = m ? `${m[1]}/${stream.uid}/watch` : undefined;
+
   const guest: GuestBook = {
     id: randomId(),
     name: body.name!.trim().slice(0, 80),
@@ -383,6 +391,7 @@ app.post("/api/guests", async (c) => {
     streamUid: stream.uid,
     streamPlaybackUrl: stream.playbackUrl,
     streamThumbnailUrl: stream.thumbnail,
+    streamWatchUrl,
     durationSeconds: Math.round(stream.duration ?? 0),
     status: "pending", // default — owner approves
     createdAt: Date.now(),
