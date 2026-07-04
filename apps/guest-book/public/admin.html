@@ -379,7 +379,8 @@
 
   async function moderate(id, action, btn) {
     btn.disabled = true;
-    const res = await fetch(`/api/admin/guests/${id}/${action}`, {
+    const qp = window.__EVENT_SLUG__ ? `?eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "";
+    const res = await fetch(`/api/admin/guests/${id}/${action}${qp}`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -396,7 +397,8 @@
   async function del0(id, btn) {
     if (!confirm("Delete this entry and its video?")) return;
     btn.disabled = true;
-    const res = await fetch(`/api/admin/guests/${id}`, {
+    const qp = window.__EVENT_SLUG__ ? `?eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "";
+    const res = await fetch(`/api/admin/guests/${id}${qp}`, {
       method: "DELETE",
       credentials: "include",
     });

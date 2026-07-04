@@ -80,6 +80,19 @@ function err(message: string, status = 400): Response {
 }
 
 /**
+ * Build the event-scoped Firestore doc id. The admin URL uses just the
+ * short id (e.g. "P_j28P68uJPrjRbY") because the client doesn't know the
+ * full prefixed form. We accept either:
+ *   - the short id, in which case we prepend `{eventSlug}__` if provided
+ *   - the full id (already prefixed), in which case we leave it alone
+ */
+function scopedId(shortId: string, eventSlug: string | undefined): string {
+  if (shortId.includes("__")) return shortId; // already event-scoped
+  if (!eventSlug) return shortId;             // no slug → use as-is (legacy v1)
+  return `${eventSlug}__${shortId}`;
+}
+
+/**
  * Verify the caller is the owner (by Firebase ID token) and return their email.
  * Throws 401/403 Response on failure (Hono will pick it up).
  */
@@ -589,7 +602,8 @@ app.put(
 app.post(
   "/api/admin/guests/:id/approve",
   withOwnerErrors(async (c, email) => {
-    const id = c.req.param("id")!;
+    const eventSlug = (c.req.query("eventSlug") || "").trim();
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await updateGuestStatus(
       c.env,
       PROJECT_ID,
@@ -606,7 +620,8 @@ app.post(
 app.post(
   "/api/admin/guests/:id/reject",
   withOwnerErrors(async (c, email) => {
-    const id = c.req.param("id")!;
+    const eventSlug = (c.req.query("eventSlug") || "").trim();
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const body = (await c.req.json().catch(() => ({}))) as { reason?: string };
     const guest = await updateGuestStatus(
       c.env,
@@ -624,7 +639,8 @@ app.post(
 app.delete(
   "/api/admin/guests/:id",
   withOwnerErrors(async (c) => {
-    const id = c.req.param("id")!;
+    const eventSlug = (c.req.query("eventSlug") || "").trim();
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await getGuest(c.env, PROJECT_ID, id, { useAdmin: true });
     if (guest) {
       // Best-effort delete the Stream video too
