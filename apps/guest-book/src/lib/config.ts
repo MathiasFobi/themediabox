@@ -93,12 +93,16 @@ export function toFirestoreValue(v: unknown): FirestoreValue {
   if (typeof v === "boolean") return { booleanValue: v };
   if (v instanceof Date) return { timestampValue: v.toISOString() };
   if (Array.isArray(v)) {
-    return { arrayValue: { values: v.map((x) => toFirestoreValue(x)) } };
+    return {
+      arrayValue: {
+        values: v.map((x) => (x == null ? { nullValue: null } : toFirestoreValue(x))),
+      },
+    };
   }
-  if (typeof v === "object") {
+  if (v != null && typeof v === "object") {
     const fields: Record<string, FirestoreValue> = {};
     for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
-      fields[k] = toFirestoreValue(x);
+      fields[k] = x == null ? { nullValue: null } : toFirestoreValue(x);
     }
     return { mapValue: { fields } };
   }
@@ -113,7 +117,10 @@ export function fromFirestoreValue<T = unknown>(v: FirestoreValue): T {
   if ("booleanValue" in v) return v.booleanValue as T;
   if ("timestampValue" in v) return v.timestampValue as T;
   if ("arrayValue" in v) {
-    return (v.arrayValue.values ?? []).map((x) => fromFirestoreValue(x)) as unknown as T;
+    if (!v.arrayValue?.values) return [] as unknown as T;
+    return v.arrayValue.values
+      .filter((x): x is FirestoreValue => x != null)
+      .map((x) => fromFirestoreValue(x)) as unknown as T;
   }
   if ("mapValue" in v) {
     const out: Record<string, unknown> = {};

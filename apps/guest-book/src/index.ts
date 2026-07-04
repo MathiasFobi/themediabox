@@ -50,8 +50,17 @@ import {
   normalizeSlug,
   upsertEvent,
 } from "./lib/events";
+import { rateLimit, getClientIp, scheduleRateLimitCleanup } from "./lib/rate-limit";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// First-request side effect: start the rate-limit bucket cleanup loop.
+// Workers don't allow setInterval in module-load scope, so we register
+// it from a middleware (which runs inside a request handler).
+app.use("*", async (c, next) => {
+  scheduleRateLimitCleanup();
+  await next();
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -326,6 +335,13 @@ app.post("/api/admin/logout", () => {
 // ─────────────────────────────────────────────────────────────────────────
 
 app.post("/api/upload", async (c) => {
+  // Rate limit: max 10 uploads per IP per 10 minutes. A user can re-record
+  // a single video many times, but 10 in 10 min is plenty.
+  const ip = getClientIp(c.req.raw);
+  if (!rateLimit(ip, { windowMs: 10 * 60 * 1000, max: 10 })) {
+    return err("Too many uploads from this IP. Please wait a few minutes.", 429);
+  }
+
   const contentType = c.req.header("content-type") ?? "";
   if (!contentType.startsWith("video/")) {
     return err("Content-Type must be a video/* type", 400);
@@ -449,6 +465,13 @@ app.get("/api/events/:slug", async (c) => {
 // ─────────────────────────────────────────────────────────────────────────
 
 app.post("/api/guests", async (c) => {
+  // Rate limit: max 20 submissions per IP per hour. A real guest records
+  // one video; the limit deters scripted abuse.
+  const ip = getClientIp(c.req.raw);
+  if (!rateLimit(ip, { windowMs: 60 * 60 * 1000, max: 20 })) {
+    return err("Too many submissions from this IP. Please try again later.", 429);
+  }
+
   const body = (await c.req.json().catch(() => ({}))) as Partial<GuestBook> & {
     streamUid?: string;
   };
