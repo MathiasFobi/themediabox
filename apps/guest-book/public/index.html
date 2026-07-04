@@ -90,6 +90,32 @@
   .hidden { display: none !important; }
   .row { display: flex; gap: 8px; }
   .row > * { flex: 1; }
+
+  /* Approved-entries feed */
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .feed-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .feed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--line); }
+  .feed-card .thumb { aspect-ratio: 9/16; background: #000; }
+  .feed-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .feed-card .meta { padding: 8px 10px; }
+  .feed-card .meta .name { font-weight: 600; font-size: 13px; }
+  .feed-card .meta .sub { font-size: 11px; color: var(--muted); }
+  .feed-card .meta .msg { font-size: 12px; color: var(--ink); margin-top: 4px; font-style: italic; }
+  .feed-empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
 </style>
 </head>
 <body>
@@ -157,6 +183,13 @@
     </div>
     <div class="progress hidden" id="upload-progress"><div class="bar" id="upload-bar"></div></div>
     <div class="status" id="submit-status">When you submit, your video uploads to Cloudflare Stream and a pending entry is created.</div>
+  </section>
+
+  <!-- Approved entries (public feed) -->
+  <section class="step" id="step-feed">
+    <h2>Messages from loved ones</h2>
+    <p id="feed-intro">Loading the latest approved messages…</p>
+    <div id="feed" class="feed-grid"></div>
   </section>
 </main>
 
@@ -404,7 +437,48 @@
 
   // Boot
   setupCamera();
+  loadFeed();
 })();
+
+async function loadFeed() {
+  const intro = document.getElementById("feed-intro");
+  const grid = document.getElementById("feed");
+  try {
+    const res = await fetch("/api/guests?status=approved&limit=50");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { guests } = await res.json();
+    if (!guests.length) {
+      intro.textContent = "No messages yet. Be the first to leave one above!";
+      return;
+    }
+    intro.textContent = `${guests.length} ${guests.length === 1 ? "message" : "messages"} from loved ones — click any to watch.`;
+    grid.innerHTML = "";
+    for (const g of guests) {
+      const card = document.createElement("a");
+      card.className = "feed-card";
+      card.href = g.streamWatchUrl || g.streamPlaybackUrl || "#";
+      card.target = "_blank";
+      card.rel = "noopener";
+      const sub = `${g.toWhom} · ${g.occasion}`;
+      const msg = g.message ? `<div class="msg">"${escapeHtml(g.message)}"</div>` : "";
+      card.innerHTML = `
+        <div class="thumb"><img src="${g.streamThumbnailUrl || ''}" alt="" loading="lazy" /></div>
+        <div class="meta">
+          <div class="name">${escapeHtml(g.name)}</div>
+          <div class="sub">${escapeHtml(sub)}</div>
+          ${msg}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+  } catch (e) {
+    intro.textContent = "Couldn't load messages right now.";
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 </script>
 </body>
 </html>
