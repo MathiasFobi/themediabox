@@ -103,32 +103,6 @@
   .row { display: flex; gap: 8px; }
   .row > * { flex: 1; }
 
-  /* Approved-entries feed */
-  .feed-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-  }
-  .feed-card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-  .feed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--line); }
-  .feed-card .thumb { aspect-ratio: 9/16; background: #000; }
-  .feed-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .feed-card .meta { padding: 8px 10px; }
-  .feed-card .meta .name { font-weight: 600; font-size: 13px; }
-  .feed-card .meta .sub { font-size: 11px; color: var(--muted); }
-  .feed-card .meta .msg { font-size: 12px; color: var(--ink); margin-top: 4px; font-style: italic; }
-  .feed-empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
-
   /* Hero image (event.headerImage) */
   .header-image-wrap {
     margin: 20px -20px 0;  /* bleed to edge of the centered main column */
@@ -142,24 +116,6 @@
     object-fit: cover;
     display: block;
   }
-
-  /* YouTube promo embed */
-  .promo-embed {
-    margin: 24px -20px 0;
-    background: #000;
-    overflow: hidden;
-  }
-  .promo-embed-inner {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 */
-    height: 0;
-  }
-  .promo-embed-inner iframe {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    border: 0;
-  }
 </style>
 </head>
 <body>
@@ -172,17 +128,11 @@
     <div class="header-image-wrap hidden" id="header-image-wrap">
       <img id="header-image" alt="" />
     </div>
-    <div class="promo-embed hidden" id="promo-embed">
-      <div class="promo-embed-inner" id="promo-embed-inner"></div>
-    </div>
   </header>
 
-  <section class="step hidden" id="step-details">
+  <section class="step" id="step-details">
     <h2>1 · Your details</h2>
     <p>Tell us a little about yourself so the hosts know who the message is from.</p>
-    <div class="promo-embed hidden" id="promo-embed-form" style="margin: 0 0 16px;">
-      <div class="promo-embed-inner" id="promo-embed-form-inner"></div>
-    </div>
     <div class="form-row">
       <label for="name">Your name *</label>
       <input id="name" name="name" required maxlength="80" placeholder="e.g. Aunty Linda" />
@@ -239,15 +189,10 @@
     <div class="status" id="submit-status">When you submit, your video uploads to Cloudflare Stream and a pending entry is created.</div>
   </section>
 
-  <!-- Approved entries (public feed) -->
-  <section class="step" id="step-feed">
-    <h2>Messages from loved ones</h2>
-    <p id="feed-intro">Loading the latest approved messages…</p>
-    <div class="controls" style="margin-top: 12px;">
-      <button class="primary" id="open-form-btn">✦ Leave a message</button>
-    </div>
-    <div id="feed" class="feed-grid"></div>
-  </section>
+  <!-- Footer with link to the main site -->
+  <footer style="text-align: center; padding: 32px 0 16px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); margin-top: 32px;">
+    <p>More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">themediabox.vercel.app</a></p>
+  </footer>
 </main>
 
 <script>
@@ -257,12 +202,6 @@
   const $ = (id) => document.getElementById(id);
   const show = (id) => $(id).classList.remove("hidden");
   const hide = (id) => $(id).classList.add("hidden");
-
-  // ── Step nav
-  $("open-form-btn").onclick = () => {
-    hide("step-feed");
-    show("step-details");
-  };
 
   $("next-1").onclick = () => {
     const name = $("name").value.trim();
@@ -503,10 +442,10 @@
   boot();
 })();
 
-// Read the slug from the URL. Two patterns:
-//   /{slug}                  → location.pathname.split("/")[1]
-//   /{slug}?slug=...         → also support query (legacy + admin deep links)
-//   /                        → no slug — show event picker
+// Read the event slug from the URL. Supports:
+//   /{slug}      → window.location.pathname.split("/")[1]
+//   /{slug}?slug=… → also query (legacy + admin deep links)
+//   /            → no slug — try the global default event
 function getSlugFromUrl() {
   const qs = new URLSearchParams(location.search);
   if (qs.get("slug")) return qs.get("slug");
@@ -516,70 +455,32 @@ function getSlugFromUrl() {
 }
 
 async function boot() {
-  const slug = getSlugFromUrl();
   // Update the "Are you the host?" link to point at this event's admin
   const hostLink = document.getElementById("host-link");
   if (hostLink) {
+    const slug = getSlugFromUrl();
     hostLink.href = slug ? `/${encodeURIComponent(slug)}/admin` : "/admin";
   }
-  if (!slug) {
-    // No slug — render an event picker from /api/events
-    const intro = document.getElementById("feed-intro");
-    const grid = document.getElementById("feed");
-    try {
-      const res = await fetch("/api/events");
-      const { events } = await res.json();
-      if (!events || !events.length) {
-        intro.textContent = "No events yet. Check back soon.";
-        return;
-      }
-      intro.textContent = "Choose an event to view its messages.";
-      grid.innerHTML = "";
-      for (const ev of events) {
-        const card = document.createElement("a");
-        card.className = "feed-card";
-        card.href = `/${encodeURIComponent(ev.slug)}`;
-        card.innerHTML = `
-          <div class="meta" style="aspect-ratio:auto; padding: 16px;">
-            <div class="name">${escapeHtml(ev.name)}</div>
-            <div class="sub">${escapeHtml(ev.occasion)} · ${escapeHtml(ev.date)}</div>
-            ${ev.welcomeMessage ? `<div class="msg" style="font-style:normal; color: var(--muted);">${escapeHtml(ev.welcomeMessage)}</div>` : ""}
-          </div>
-        `;
-        grid.appendChild(card);
-      }
-    } catch (e) {
-      intro.textContent = "Couldn't load events.";
-    }
-    return;
-  }
-
-  window.__EVENT_SLUG__ = slug;
-
   // Load event details for branding
+  const slug = getSlugFromUrl();
+  if (!slug) return;
+  window.__EVENT_SLUG__ = slug;
   try {
     const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
-    if (res.ok) {
-      const event = await res.json();
-      applyEventBranding(event);
-      // Hide the form if event is closed
-      if (event.status === "closed") {
-        const btn = document.getElementById("open-form-btn");
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = "Submissions closed";
-          btn.title = "The host has closed this event to new submissions.";
-        }
-      }
-    } else if (res.status === 404) {
-      document.getElementById("feed-intro").textContent = "Event not found.";
-      return;
+    if (!res.ok) return;
+    const event = await res.json();
+    applyEventBranding(event);
+    if (event.status === "closed") {
+      const allInputs = document.querySelectorAll('#step-details input, #step-details textarea, #step-details button');
+      allInputs.forEach((el) => { el.disabled = true; });
+      const note = document.createElement("p");
+      note.style.cssText = "color: var(--bad); font-weight: 600; margin-top: 12px;";
+      note.textContent = "The host has closed this event to new submissions.";
+      document.querySelector("#step-details")?.appendChild(note);
     }
   } catch (e) {
     console.warn("event load failed", e);
   }
-
-  loadFeed();
 }
 
 function applyEventBranding(event) {
@@ -593,7 +494,7 @@ function applyEventBranding(event) {
     document.documentElement.style.setProperty("--gold", event.themeColor);
     document.documentElement.style.setProperty("--gold-deep", shadeColor(event.themeColor, -20));
   }
-  // Update step-1's "toWhom" placeholder to the event name
+  // Update the "toWhom" placeholder to the event name
   const toWhomInput = document.getElementById("toWhom");
   if (toWhomInput) toWhomInput.placeholder = `e.g. ${event.name}`;
   // Update default occasion text
@@ -609,84 +510,15 @@ function applyEventBranding(event) {
   } else {
     wrap.classList.add("hidden");
   }
-  // YouTube promo embed — both in the header and in the form step
-  applyPromoEmbed(event.promoVideoId);
-}
-
-/**
- * Render the YouTube promo embed in both the home header and the form
- * step-details. Accepts a YouTube video ID (11 chars) or undefined.
- * Uses youtube-nocookie.com + lazy-loading to keep the page lightweight.
- */
-function applyPromoEmbed(videoId) {
-  const targets = [
-    { wrap: "promo-embed", inner: "promo-embed-inner" },
-    { wrap: "promo-embed-form", inner: "promo-embed-form-inner" },
-  ];
-  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
-    targets.forEach((t) => $(t.wrap)?.classList.add("hidden"));
-    return;
-  }
-  const src = `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0`;
-  targets.forEach((t) => {
-    const inner = $(t.inner);
-    const wrap = $(t.wrap);
-    if (!inner || !wrap) return;
-    // Only inject once per target (idempotent)
-    if (inner.dataset.videoId === videoId) return;
-    inner.innerHTML = `<iframe src="${src}" title="Promo video" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-    inner.dataset.videoId = videoId;
-    wrap.classList.remove("hidden");
-  });
 }
 
 function shadeColor(hex, percent) {
-  // Tiny helper: darken/lighten a hex color by `percent` (-100 to 100).
+  // Darken/lighten a hex color by `percent` (-100 to 100).
   const num = parseInt(hex.replace("#", ""), 16);
   const r = Math.max(0, Math.min(255, (num >> 16) + percent));
   const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
   const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-}
-
-async function loadFeed() {
-  const intro = document.getElementById("feed-intro");
-  const grid = document.getElementById("feed");
-  try {
-    const res = await fetch(`/api/guests?status=approved&eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}&limit=50`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { guests } = await res.json();
-    if (!guests.length) {
-      intro.textContent = "No messages yet. Be the first to leave one above!";
-      return;
-    }
-    intro.textContent = `${guests.length} ${guests.length === 1 ? "message" : "messages"} from loved ones — click any to watch.`;
-    grid.innerHTML = "";
-    for (const g of guests) {
-      const card = document.createElement("a");
-      card.className = "feed-card";
-      card.href = g.streamWatchUrl || g.streamPlaybackUrl || "#";
-      card.target = "_blank";
-      card.rel = "noopener";
-      const sub = `${g.toWhom} · ${g.occasion}`;
-      const msg = g.message ? `<div class="msg">"${escapeHtml(g.message)}"</div>` : "";
-      card.innerHTML = `
-        <div class="thumb"><img src="${g.streamThumbnailUrl || ''}" alt="" loading="lazy" /></div>
-        <div class="meta">
-          <div class="name">${escapeHtml(g.name)}</div>
-          <div class="sub">${escapeHtml(sub)}</div>
-          ${msg}
-        </div>
-      `;
-      grid.appendChild(card);
-    }
-  } catch (e) {
-    intro.textContent = "Couldn't load messages right now.";
-  }
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 </script>
 </body>

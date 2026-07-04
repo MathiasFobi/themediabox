@@ -8,8 +8,15 @@
  * Schema:
  *   events/{slug} {
  *     slug, name, occasion, date, welcomeMessage, themeColor,
- *     headerImage?, status, createdAt, ownerEmail
+ *     headerImage?, promoVideoId?, status, createdAt,
+ *     hostEmails[], claimCodes[]
  *   }
+ *
+ *   hostEmails: lowercase-deduped list of organizer emails.
+ *     The OWNER_EMAIL env var is a global super-admin who can
+ *     also moderate any event regardless of this list.
+ *   claimCodes: active + used one-time invite codes for adding
+ *     new co-organizers. Generated on demand by a current host.
  */
 import type { Env, Event, FirestoreDoc, FirestoreValue } from "./config";
 import { toFirestoreValue, fromFirestoreValue } from "./config";

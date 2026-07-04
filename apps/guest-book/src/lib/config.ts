@@ -56,7 +56,16 @@ export interface Event {
   promoVideoId?: string;   // YouTube video ID (e.g. "dQw4w9WgXcQ") — rendered as an iframe
   status: "open" | "closed"; // closed = form disabled, feed still visible
   createdAt: number;       // epoch ms
-  ownerEmail: string;
+  hostEmails: string[];    // emails allowed to moderate this event (lowercase, deduped)
+  claimCodes: ClaimCode[]; // active + used invite codes for co-organizers
+}
+
+export interface ClaimCode {
+  code: string;            // 8-char base32; one-time-use, expires after 7 days
+  createdAt: number;       // epoch ms
+  createdBy: string;       // email of the host who created the code
+  usedBy?: string;         // email of the co-organizer who consumed it
+  usedAt?: number;         // epoch ms when consumed
 }
 
 export interface FirestoreDoc {
@@ -69,7 +78,9 @@ export type FirestoreValue =
   | { doubleValue: number }
   | { booleanValue: boolean }
   | { timestampValue: string }
-  | { nullValue: null };
+  | { nullValue: null }
+  | { arrayValue: { values: FirestoreValue[] } }
+  | { mapValue: { fields: Record<string, FirestoreValue> } };
 
 export function toFirestoreValue(v: unknown): FirestoreValue {
   if (v === null || v === undefined) return { nullValue: null };
@@ -81,6 +92,16 @@ export function toFirestoreValue(v: unknown): FirestoreValue {
   }
   if (typeof v === "boolean") return { booleanValue: v };
   if (v instanceof Date) return { timestampValue: v.toISOString() };
+  if (Array.isArray(v)) {
+    return { arrayValue: { values: v.map((x) => toFirestoreValue(x)) } };
+  }
+  if (typeof v === "object") {
+    const fields: Record<string, FirestoreValue> = {};
+    for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
+      fields[k] = toFirestoreValue(x);
+    }
+    return { mapValue: { fields } };
+  }
   throw new Error(`Unsupported Firestore value type: ${typeof v}`);
 }
 
@@ -91,5 +112,15 @@ export function fromFirestoreValue<T = unknown>(v: FirestoreValue): T {
   if ("doubleValue" in v) return v.doubleValue as T;
   if ("booleanValue" in v) return v.booleanValue as T;
   if ("timestampValue" in v) return v.timestampValue as T;
+  if ("arrayValue" in v) {
+    return (v.arrayValue.values ?? []).map((x) => fromFirestoreValue(x)) as unknown as T;
+  }
+  if ("mapValue" in v) {
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(v.mapValue.fields ?? {})) {
+      out[k] = fromFirestoreValue(x);
+    }
+    return out as T;
+  }
   throw new Error("Unknown Firestore value shape");
 }

@@ -80,6 +80,21 @@ function err(message: string, status = 400): Response {
 }
 
 /**
+ * Generate a short, human-typeable claim code. 8 chars, base32 alphabet
+ * (no 0/1/I/O confusion). Roughly 40 bits of entropy — enough that a
+ * brute-force search against the per-event code list is infeasible.
+ */
+function generateClaimCode(): string {
+  const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/1/I/O
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += ALPHABET[bytes[i] % ALPHABET.length];
+  }
+  return code.match(/.{1,4}/g)!.join("-"); // "ABCD-EFGH" — easier to read aloud
+}
+
+/**
  * Build the event-scoped Firestore doc id. The admin URL uses just the
  * short id (e.g. "P_j28P68uJPrjRbY") because the client doesn't know the
  * full prefixed form. We accept either:
@@ -107,6 +122,41 @@ async function requireOwner(req: Request, env: Env): Promise<string> {
   return claims.email;
 }
 
+/**
+ * Verify the caller is either:
+ *   - The global super-admin (env.OWNER_EMAIL), OR
+ *   - A host of the event identified by `?eventSlug=...` (or the slug
+ *     passed as the second arg).
+ *
+ * The global super-admin can moderate ANY event. Per-event hosts can
+ * only moderate their own event. Email must be verified.
+ */
+async function requireEventHost(
+  req: Request,
+  env: Env,
+  slug?: string
+): Promise<{ email: string; eventSlug: string }> {
+  const token = extractIdToken(req);
+  if (!token) throw err("Missing auth token", 401);
+  const claims = await verifyFirebaseIdToken(token, PROJECT_ID);
+  if (!claims.email_verified) throw err("Email not verified", 403);
+  const email = claims.email.toLowerCase();
+
+  // Global super-admin can do anything
+  if (email === env.OWNER_EMAIL.toLowerCase()) {
+    return { email, eventSlug: slug ?? "" };
+  }
+
+  // Otherwise we need an event to check membership against
+  const eventSlug = slug ?? new URL(req.url).searchParams.get("eventSlug") ?? "";
+  if (!eventSlug) throw err("eventSlug is required", 400);
+  const event = await getEvent(env, PROJECT_ID, eventSlug, { useAdmin: true });
+  if (!event) throw err("Event not found", 404);
+  const isHost = (event.hostEmails ?? []).some((e) => e.toLowerCase() === email);
+  if (!isHost) throw err("Not a host of this event", 403);
+  return { email, eventSlug };
+}
+
 function withOwnerErrors<T>(fn: (c: import("hono").Context<{ Bindings: Env }>, email: string) => Promise<T>) {
   return async (c: import("hono").Context<{ Bindings: Env }>) => {
     try {
@@ -116,6 +166,22 @@ function withOwnerErrors<T>(fn: (c: import("hono").Context<{ Bindings: Env }>, e
     } catch (e) {
       if (e instanceof Response) return e;
       console.error("owner route error", e);
+      return err(e instanceof Error ? e.message : "Internal error", 500);
+    }
+  };
+}
+
+function withEventHostErrors<T>(
+  fn: (c: import("hono").Context<{ Bindings: Env }>, ctx: { email: string; eventSlug: string }) => Promise<T>
+) {
+  return async (c: import("hono").Context<{ Bindings: Env }>) => {
+    try {
+      const ctx = await requireEventHost(c.req.raw, c.env);
+      const result = await fn(c, ctx);
+      return json(result);
+    } catch (e) {
+      if (e instanceof Response) return e;
+      console.error("event-host route error", e);
       return err(e instanceof Error ? e.message : "Internal error", 500);
     }
   };
@@ -136,17 +202,16 @@ app.post("/api/admin/login", async (c) => {
     console.error("admin login: token verification failed", e);
     return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
   }
-  // Owner check first (cheaper, and avoids leaking verification state to
-  // non-owners). Verification status is reported back in the response so
-  // the admin UI can prompt the user to verify if needed.
-  if (claims.email.toLowerCase() !== c.env.OWNER_EMAIL.toLowerCase()) {
-    return err("Not the owner", 403);
-  }
+  // Any verified email can sign in. The session is granted; per-route
+  // authorization (requireEventHost / requireOwner) decides what they
+  // can actually do. This lets co-organizers redeem claim codes and
+  // sign in to moderate their event.
 
   // 7-day session cookie (httpOnly, sameSite=Lax, secure in prod).
   // The session is granted even if email is unverified — moderation actions
-  // will still be blocked at the route level (requireOwner enforces verified).
-  // This lets the admin UI show a "please verify" prompt + send button.
+  // will still be blocked at the route level (requireEventHost enforces
+  // verified). This lets the admin UI show a "please verify" prompt + send
+  // button.
   const maxAge = 60 * 60 * 24 * 7;
   const cookie = [
     `__session=${encodeURIComponent(body.idToken)}`,
@@ -192,9 +257,7 @@ app.post("/api/admin/send-verification", async (c) => {
   } catch (e) {
     return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
   }
-  if (claims.email.toLowerCase() !== c.env.OWNER_EMAIL.toLowerCase()) {
-    return err("Not the owner", 403);
-  }
+  // Any verified-or-not user can request their own verification email
   if (claims.email_verified) {
     return err("Email already verified", 400);
   }
@@ -498,7 +561,7 @@ app.get("/api/guests/:id", async (c) => {
     if (!guest) return err("Not found", 404);
     if (guest.status !== "approved" || eventSlug !== c.req.query("eventSlug")) {
       try {
-        await requireOwner(c.req.raw, c.env);
+        await requireEventHost(c.req.raw, c.env, eventSlug);
       } catch {
         return err("Not found", 404);
       }
@@ -516,7 +579,7 @@ app.get("/api/guests/:id", async (c) => {
 
 app.get(
   "/api/admin/guests",
-  withOwnerErrors(async (c, email) => {
+  withEventHostErrors(async (c, { email }) => {
     const url = new URL(c.req.url);
     const status = (url.searchParams.get("status") ?? "pending") as
       | "pending"
@@ -564,9 +627,11 @@ app.post(
       welcomeMessage: body.welcomeMessage?.trim() || `Leave a message for the hosts of ${slug}.`,
       themeColor: body.themeColor?.trim() || "#c9a14a",
       headerImage: body.headerImage?.trim() || undefined,
+      promoVideoId: body.promoVideoId?.trim() || undefined,
       status: body.status === "closed" ? "closed" : "open",
       createdAt: Date.now(),
-      ownerEmail: email,
+      hostEmails: [email.toLowerCase()],
+      claimCodes: [],
     };
     await upsertEvent(c.env, PROJECT_ID, event, { useAdmin: true });
     return event;
@@ -579,8 +644,11 @@ app.put(
     const slug = c.req.param("slug")!;
     const existing = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
     if (!existing) return err("Event not found", 404);
-    if (existing.ownerEmail.toLowerCase() !== email.toLowerCase()) {
-      return err("Not the owner of this event", 403);
+    // Authorization: must be a host of this event, OR the global super-admin
+    const isGlobalOwner = email.toLowerCase() === c.env.OWNER_EMAIL.toLowerCase();
+    const isHost = (existing.hostEmails ?? []).some((e) => e.toLowerCase() === email.toLowerCase());
+    if (!isGlobalOwner && !isHost) {
+      return err("Not a host of this event", 403);
     }
     const body = (await c.req.json().catch(() => ({}))) as Partial<Event>;
     // Normalize promoVideoId: accept either a raw ID (e.g. "IiUXbBIc2ZI") or
@@ -621,10 +689,106 @@ app.put(
   })
 );
 
+// ─────────────────────────────────────────────────────────────────────────
+// Co-organizer claim codes
+//
+// Hosts of an event can mint a one-time-use claim code (8 chars, base32,
+// 7-day expiry). Anyone with the code can call POST /api/events/:slug/claim
+// with a verified Firebase ID token to become a host of the event.
+// ─────────────────────────────────────────────────────────────────────────
+
+const CLAIM_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+app.post(
+  "/api/admin/events/:slug/claim-codes",
+  withEventHostErrors(async (c, { email, eventSlug }) => {
+    const event = await getEvent(c.env, PROJECT_ID, eventSlug, { useAdmin: true });
+    if (!event) return err("Event not found", 404);
+    const code = generateClaimCode();
+    const claimCodes = [
+      ...(event.claimCodes ?? []),
+      { code, createdAt: Date.now(), createdBy: email },
+    ];
+    await upsertEvent(c.env, PROJECT_ID, { ...event, claimCodes }, {
+      useAdmin: true,
+      updateOnly: ["claimCodes"],
+    });
+    return { code, expiresAt: Date.now() + CLAIM_CODE_TTL_MS };
+  })
+);
+
+app.delete(
+  "/api/admin/events/:slug/claim-codes/:code",
+  withEventHostErrors(async (c, { eventSlug }) => {
+    const targetCode = c.req.param("code")!;
+    const event = await getEvent(c.env, PROJECT_ID, eventSlug, { useAdmin: true });
+    if (!event) return err("Event not found", 404);
+    const claimCodes = (event.claimCodes ?? []).filter((c) => c.code !== targetCode);
+    await upsertEvent(c.env, PROJECT_ID, { ...event, claimCodes }, {
+      useAdmin: true,
+      updateOnly: ["claimCodes"],
+    });
+    return { ok: true };
+  })
+);
+
+app.get(
+  "/api/admin/events/:slug/claim-codes",
+  withEventHostErrors(async (c, { eventSlug }) => {
+    const event = await getEvent(c.env, PROJECT_ID, eventSlug, { useAdmin: true });
+    if (!event) return err("Event not found", 404);
+    const now = Date.now();
+    const codes = (event.claimCodes ?? [])
+      .filter((c) => !c.usedAt && c.createdAt + CLAIM_CODE_TTL_MS > now)
+      .map((c) => ({ code: c.code, createdAt: c.createdAt, createdBy: c.createdBy }));
+    return { codes };
+  })
+);
+
+/**
+ * Public claim endpoint: anyone with a valid code can call this with a
+ * verified Firebase ID token to become a host. The code is single-use.
+ */
+app.post("/api/events/:slug/claim", async (c) => {
+  const slug = c.req.param("slug")!;
+  const body = (await c.req.json().catch(() => ({}))) as { idToken?: string; code?: string };
+  if (!body.idToken) return err("Missing idToken");
+  if (!body.code) return err("Missing code");
+
+  let claims;
+  try {
+    claims = await verifyFirebaseIdToken(body.idToken, PROJECT_ID);
+  } catch (e) {
+    return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
+  }
+  if (!claims.email_verified) return err("Email not verified", 403);
+
+  const event = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
+  if (!event) return err("Event not found", 404);
+
+  const claimCodes = event.claimCodes ?? [];
+  const codeIdx = claimCodes.findIndex(
+    (c) => c.code === body.code && !c.usedAt && c.createdAt + CLAIM_CODE_TTL_MS > Date.now()
+  );
+  if (codeIdx < 0) return err("Invalid or expired claim code", 400);
+
+  // Mark code as used
+  claimCodes[codeIdx] = { ...claimCodes[codeIdx], usedBy: claims.email, usedAt: Date.now() };
+
+  // Add email to host list (deduped, lowercase)
+  const emailLower = claims.email.toLowerCase();
+  const hostEmails = Array.from(new Set([...(event.hostEmails ?? []), emailLower]));
+
+  await upsertEvent(c.env, PROJECT_ID, { ...event, hostEmails, claimCodes }, {
+    useAdmin: true,
+    updateOnly: ["hostEmails", "claimCodes"],
+  });
+  return json({ ok: true, eventSlug: event.slug });
+});
+
 app.post(
   "/api/admin/guests/:id/approve",
-  withOwnerErrors(async (c, email) => {
-    const eventSlug = (c.req.query("eventSlug") || "").trim();
+  withEventHostErrors(async (c, { email, eventSlug }) => {
     const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await updateGuestStatus(
       c.env,
@@ -641,8 +805,7 @@ app.post(
 
 app.post(
   "/api/admin/guests/:id/reject",
-  withOwnerErrors(async (c, email) => {
-    const eventSlug = (c.req.query("eventSlug") || "").trim();
+  withEventHostErrors(async (c, { email, eventSlug }) => {
     const id = scopedId(c.req.param("id")!, eventSlug);
     const body = (await c.req.json().catch(() => ({}))) as { reason?: string };
     const guest = await updateGuestStatus(
@@ -660,8 +823,7 @@ app.post(
 
 app.delete(
   "/api/admin/guests/:id",
-  withOwnerErrors(async (c) => {
-    const eventSlug = (c.req.query("eventSlug") || "").trim();
+  withEventHostErrors(async (c, { eventSlug }) => {
     const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await getGuest(c.env, PROJECT_ID, id, { useAdmin: true });
     if (guest) {
