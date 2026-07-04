@@ -27,6 +27,7 @@ export interface Env {
 
 export interface GuestBook {
   id: string;
+  eventSlug: string;       // FK to events/{slug} — the event this entry belongs to
   name: string;          // guest's display name (free-text)
   email?: string;        // optional, for owner to follow up
   toWhom: string;        // who the message is for (the host/event)
@@ -42,6 +43,19 @@ export interface GuestBook {
   moderatedAt?: number;
   moderatedBy?: string;
   rejectReason?: string;
+}
+
+export interface Event {
+  slug: string;            // url-safe identifier, e.g. "maya-and-jordan"
+  name: string;            // display name, e.g. "Maya & Jordan's Wedding"
+  occasion: string;        // default copy, e.g. "Wedding"
+  date: string;            // ISO date for display, e.g. "2026-08-15"
+  welcomeMessage: string;  // longer intro text, e.g. "Leave a heartfelt message..."
+  themeColor: string;      // hex color, default "#c9a14a" gold
+  headerImage?: string;    // optional URL to a hero image
+  status: "open" | "closed"; // closed = form disabled, feed still visible
+  createdAt: number;       // epoch ms
+  ownerEmail: string;
 }
 
 export interface FirestoreDoc {

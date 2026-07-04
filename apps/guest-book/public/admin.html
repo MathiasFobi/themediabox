@@ -57,6 +57,13 @@
   .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
   .login-card input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
   .login-card button { width: 100%; padding: 10px; }
+  .login-card a:hover { background: var(--paper); }
+  .login-card a:hover span { color: var(--ink) !important; }
+
+  /* Event settings form */
+  .form-row label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .form-row input, .form-row textarea, .form-row select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; font-family: inherit; width: 100%; max-width: 480px; }
+  .form-row input[type=color] { width: 80px; height: 36px; padding: 2px; }
 
   .hidden { display: none !important; }
 
@@ -75,8 +82,12 @@
 <main>
   <!-- Login panel -->
   <div id="login-panel" class="login-card">
-    <h2>Owner sign in</h2>
-    <p>Sign in with your Google account. Only the configured owner can moderate.</p>
+    <h2 id="login-title">Owner sign in</h2>
+    <p id="login-sub">Sign in with your Google account. Only the configured owner can moderate.</p>
+    <div id="event-picker" class="hidden" style="margin-bottom: 16px;">
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Select an event to manage:</p>
+      <div id="event-picker-list"></div>
+    </div>
     <div class="signin-block">
       <label for="email-input">Email</label>
       <input id="email-input" type="email" placeholder="you@gmail.com" />
@@ -99,11 +110,52 @@
       </div>
     </div>
     <div class="tabs">
-      <button data-status="pending" class="active">Pending</button>
-      <button data-status="approved">Approved</button>
-      <button data-status="rejected">Rejected</button>
+      <button data-tab="moderation" class="active">Moderation</button>
+      <button data-tab="event">Event settings</button>
     </div>
-    <div id="list" class="row"></div>
+
+    <!-- Moderation tab -->
+    <div id="tab-moderation">
+      <div class="subtabs" style="display: flex; gap: 4px; margin-bottom: 12px;">
+        <button data-status="pending" class="active subtab">Pending</button>
+        <button data-status="approved" class="subtab">Approved</button>
+        <button data-status="rejected" class="subtab">Rejected</button>
+      </div>
+      <div id="list" class="row"></div>
+    </div>
+
+    <!-- Event settings tab -->
+    <div id="tab-event" class="hidden">
+      <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">
+        Edit the event's branding and settings. Changes apply immediately to the public page.
+      </p>
+      <div id="event-form-status" style="font-size: 13px; color: var(--muted); margin-bottom: 12px;"></div>
+      <div class="form-row"><label>Event name</label><input id="ev-name" maxlength="120" /></div>
+      <div class="form-row"><label>Slug (URL)</label>
+        <input id="ev-slug" maxlength="50" pattern="[a-z0-9\-]+" disabled title="Slug cannot be changed" />
+      </div>
+      <div class="form-row"><label>Occasion</label><input id="ev-occasion" maxlength="80" placeholder="e.g. Wedding" /></div>
+      <div class="form-row"><label>Date</label><input id="ev-date" type="date" /></div>
+      <div class="form-row"><label>Welcome message</label>
+        <textarea id="ev-welcome" maxlength="500" rows="3"></textarea>
+      </div>
+      <div class="form-row"><label>Theme color</label>
+        <input id="ev-color" type="color" />
+      </div>
+      <div class="form-row"><label>Header image URL (optional)</label>
+        <input id="ev-image" maxlength="500" placeholder="https://..." />
+      </div>
+      <div class="form-row"><label>Status</label>
+        <select id="ev-status">
+          <option value="open">Open (accepting submissions)</option>
+          <option value="closed">Closed (no new submissions)</option>
+        </select>
+      </div>
+      <div class="controls" style="justify-content: flex-start;">
+        <button class="primary" id="ev-save">Save changes</button>
+        <a id="ev-public-link" class="primary" target="_blank" style="text-decoration: none;">View public page</a>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -119,6 +171,14 @@
   };
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+
+  // Resolve the event slug from the URL. Supports:
+  //   /{slug}/admin       (recommended)  → location.pathname.split("/")[1]
+  //   /admin?slug={slug}  (legacy / link share)
+  //   /admin              (no slug)     → show "select an event" prompt
+  const _qsSlug = new URLSearchParams(location.search).get("slug");
+  const _pathMatch = location.pathname.match(/^\/([a-z0-9-]{1,50})\/admin/);
+  window.__EVENT_SLUG__ = _qsSlug || (_pathMatch ? _pathMatch[1] : null);
 
   const $ = (id) => document.getElementById(id);
   const show = (id) => $(id).classList.remove("hidden");
@@ -188,14 +248,48 @@
     $("user-email").textContent = "";
   };
 
-  document.querySelectorAll(".tabs button").forEach((btn) => {
+  // Top-level tab handlers (Moderation / Event settings)
+  document.querySelectorAll('.tabs button[data-tab]').forEach((btn) => {
     btn.onclick = () => {
-      document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll('.tabs button[data-tab]').forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const tab = btn.dataset.tab;
+      hide("tab-moderation");
+      hide("tab-event");
+      show(`tab-${tab}`);
+      if (tab === "event") loadEventForm();
+    };
+  });
+
+  // Sub-tab handlers (Pending / Approved / Rejected inside Moderation)
+  document.querySelectorAll(".subtab").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll(".subtab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentStatus = btn.dataset.status;
       load();
     };
   });
+
+  // Event settings form
+  $("ev-save").onclick = saveEventForm;
+
+  // Event picker for /admin (no slug)
+  if (!window.__EVENT_SLUG__) {
+    (async () => {
+      try {
+        const res = await fetch("/api/events");
+        const { events } = await res.json();
+        if (events && events.length) {
+          show("event-picker");
+          const list = $("event-picker-list");
+          list.innerHTML = events.map((e) =>
+            `<a href="/${encodeURIComponent(e.slug)}/admin" style="display: block; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 6px; text-decoration: none; color: var(--ink); font-weight: 600;">${escapeHtml(e.name)} <span style="color: var(--muted); font-weight: 400;">/ ${escapeHtml(e.slug)}</span></a>`
+          ).join("");
+        }
+      } catch {}
+    })();
+  }
 
   function onSignedIn(email, emailVerified) {
     $("user-email").textContent = email + (emailVerified ? "" : " (unverified)");
@@ -208,14 +302,15 @@
       hide("verify-banner");
     }
     load();
+    loadEventForm();
   }
 
   async function load() {
     const list = $("list");
     list.innerHTML = `<div class="empty"><div class="crest">⏳</div>Loading…</div>`;
-    const res = await fetch(`/api/admin/guests?status=${currentStatus}&limit=200`, {
-      credentials: "include",
-    });
+    const url = `/api/admin/guests?status=${currentStatus}&limit=200` +
+      (window.__EVENT_SLUG__ ? `&eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}` : "");
+    const res = await fetch(url, { credentials: "include" });
     if (!res.ok) {
       list.innerHTML = `<div class="empty"><div class="crest">⚠</div>Failed to load: ${res.status}</div>`;
       return;
@@ -339,6 +434,65 @@
       } catch {}
     });
   });
+
+  // ── Event settings form ─────────────────────────────────────
+  async function loadEventForm() {
+    if (!window.__EVENT_SLUG__) {
+      $("event-form-status").textContent = "Open this page with a specific event slug (e.g. /admin?slug=demo) to edit it.";
+      return;
+    }
+    try {
+      const res = await fetch(`/api/events/${encodeURIComponent(window.__EVENT_SLUG__)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ev = await res.json();
+      $("ev-name").value = ev.name || "";
+      $("ev-slug").value = ev.slug || "";
+      $("ev-occasion").value = ev.occasion || "";
+      $("ev-date").value = ev.date || "";
+      $("ev-welcome").value = ev.welcomeMessage || "";
+      $("ev-color").value = ev.themeColor || "#c9a14a";
+      $("ev-image").value = ev.headerImage || "";
+      $("ev-status").value = ev.status || "open";
+      $("ev-public-link").href = `/${encodeURIComponent(ev.slug)}`;
+      $("event-form-status").textContent = "";
+    } catch (e) {
+      $("event-form-status").textContent = "Couldn't load event: " + (e.message || e);
+    }
+  }
+
+  async function saveEventForm() {
+    if (!window.__EVENT_SLUG__) return;
+    $("ev-save").disabled = true;
+    $("ev-save").textContent = "Saving…";
+    try {
+      const body = {
+        name: $("ev-name").value.trim(),
+        occasion: $("ev-occasion").value.trim(),
+        date: $("ev-date").value,
+        welcomeMessage: $("ev-welcome").value.trim(),
+        themeColor: $("ev-color").value,
+        headerImage: $("ev-image").value.trim() || undefined,
+        status: $("ev-status").value,
+      };
+      const res = await fetch(`/api/admin/events/${encodeURIComponent(window.__EVENT_SLUG__)}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+      $("event-form-status").textContent = "Saved ✓";
+      setTimeout(() => ($("event-form-status").textContent = ""), 2000);
+    } catch (e) {
+      $("event-form-status").textContent = "Save failed: " + (e.message || e);
+    } finally {
+      $("ev-save").disabled = false;
+      $("ev-save").textContent = "Save changes";
+    }
+  }
 </script>
 </body>
 </html>

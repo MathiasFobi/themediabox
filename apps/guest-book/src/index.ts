@@ -27,7 +27,7 @@
  *   DELETE /api/admin/guests/:id      (auth: owner) — also deletes the Stream video
  */
 import { Hono } from "hono";
-import type { Env, GuestBook } from "./lib/config";
+import type { Env, Event, GuestBook } from "./lib/config";
 import {
   extractIdToken,
   verifyFirebaseIdToken,
@@ -44,6 +44,12 @@ import {
   deleteStreamVideo,
   getStreamVideo,
 } from "./lib/stream";
+import {
+  getEvent,
+  listEvents,
+  normalizeSlug,
+  upsertEvent,
+} from "./lib/events";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -338,6 +344,31 @@ app.get("/api/stream/:uid/status", async (c) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────
+// Public event endpoints
+// ─────────────────────────────────────────────────────────────────────────
+
+app.get("/api/events", async (c) => {
+  // List all events (public read; in v1.5 we just need the slug for routing)
+  try {
+    const events = await listEvents(c.env, PROJECT_ID, { useAdmin: true });
+    return json({ events });
+  } catch (e) {
+    return err(e instanceof Error ? e.message : "List failed", 500);
+  }
+});
+
+app.get("/api/events/:slug", async (c) => {
+  const slug = c.req.param("slug")!;
+  try {
+    const event = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
+    if (!event) return err("Not found", 404);
+    return json(event);
+  } catch (e) {
+    return err(e instanceof Error ? e.message : "Get failed", 500);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────
 // Public guest endpoints
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -347,12 +378,23 @@ app.post("/api/guests", async (c) => {
   };
 
   // Validation — keep this tight; this is the only untrusted write surface
-  const required: (keyof GuestBook)[] = ["name", "toWhom", "occasion", "streamUid"];
+  const required: (keyof GuestBook)[] = ["name", "toWhom", "occasion", "streamUid", "eventSlug"];
   for (const k of required) {
     const v = body[k];
     if (typeof v !== "string" || !v.trim()) return err(`Missing ${k}`);
   }
-  const maxBytes = Number(c.env.MAX_UPLOAD_BYTES);
+
+  // Verify the event exists and is open.
+  let event: Event;
+  try {
+    const e = await getEvent(c.env, PROJECT_ID, body.eventSlug!, { useAdmin: true });
+    if (!e) return err("Event not found", 404);
+    if (e.status === "closed") return err("This event is closed to new submissions", 403);
+    event = e;
+  } catch (e) {
+    return err(e instanceof Error ? e.message : "Event lookup failed", 500);
+  }
+
   const maxSecs = Number(c.env.MAX_RECORDING_SECONDS);
 
   // 1) Verify the Stream UID actually exists & is ready
@@ -383,6 +425,7 @@ app.post("/api/guests", async (c) => {
 
   const guest: GuestBook = {
     id: randomId(),
+    eventSlug: event.slug,
     name: body.name!.trim().slice(0, 80),
     email: body.email?.trim().slice(0, 200) || undefined,
     toWhom: body.toWhom!.trim().slice(0, 80),
@@ -396,9 +439,6 @@ app.post("/api/guests", async (c) => {
     status: "pending", // default — owner approves
     createdAt: Date.now(),
   };
-  if (maxBytes && body.durationSeconds && body.durationSeconds > maxSecs) {
-    return err("Recording too long", 400);
-  }
 
   // 3) Public write path: guests don't have Firebase accounts, so we use
   //    the service account (admin) to write to Firestore. The Worker holds
@@ -409,17 +449,20 @@ app.post("/api/guests", async (c) => {
     console.error("firestore create error", e);
     return err(e instanceof Error ? e.message : "Firestore write failed", 500);
   }
-  return json({ id: guest.id, status: guest.status });
+  return json({ id: guest.id, eventSlug: guest.eventSlug, status: guest.status });
 });
 
 app.get("/api/guests", async (c) => {
   const status = c.req.query("status") as "pending" | "approved" | "rejected" | undefined;
+  const eventSlug = c.req.query("eventSlug") ?? undefined;
   const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
 
-  // Public read: only approved, max 50
+  // Public read: only approved, must be scoped to an event
   if (status && status !== "approved") return err("Only approved is public", 400);
+  if (!eventSlug) return err("eventSlug query param is required", 400);
   try {
     const rows = await listGuests(c.env, PROJECT_ID, {
+      eventSlug,
       status: status ?? "approved",
       limit,
       useAdmin: true,
@@ -432,16 +475,19 @@ app.get("/api/guests", async (c) => {
 });
 
 app.get("/api/guests/:id", async (c) => {
-  const id = c.req.param("id");
+  // ID format: {eventSlug}__{id} — we split it to scope the read.
+  const rawId = c.req.param("id");
+  const sep = rawId.indexOf("__");
+  if (sep < 0) return err("Invalid id", 400);
+  const eventSlug = rawId.slice(0, sep);
   try {
-    const guest = await getGuest(c.env, PROJECT_ID, id, { useAdmin: true });
+    const guest = await getGuest(c.env, PROJECT_ID, rawId, { useAdmin: true });
     if (!guest) return err("Not found", 404);
-    // Pending/rejected are owner-only
-    if (guest.status !== "approved") {
+    if (guest.status !== "approved" || eventSlug !== c.req.query("eventSlug")) {
       try {
         await requireOwner(c.req.raw, c.env);
       } catch {
-        return err("Not found", 404); // collapse 403 into 404 to avoid existence leaks
+        return err("Not found", 404);
       }
     }
     return json(guest);
@@ -463,9 +509,80 @@ app.get(
       | "pending"
       | "approved"
       | "rejected";
+    const eventSlug = url.searchParams.get("eventSlug") ?? undefined;
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 500);
-    const rows = await listGuests(c.env, PROJECT_ID, { status, limit, useAdmin: true });
+    const rows = await listGuests(c.env, PROJECT_ID, {
+      status,
+      limit,
+      eventSlug,
+      useAdmin: true,
+    });
     return { guests: rows, requestedBy: email };
+  })
+);
+
+app.get(
+  "/api/admin/events",
+  withOwnerErrors(async (_c, email) => {
+    const events = await listEvents(_c.env, PROJECT_ID, { useAdmin: true });
+    return { events, requestedBy: email };
+  })
+);
+
+app.post(
+  "/api/admin/events",
+  withOwnerErrors(async (c, email) => {
+    const body = (await c.req.json().catch(() => ({}))) as Partial<Event>;
+    if (!body.slug) return err("Missing slug");
+    let slug: string;
+    try {
+      slug = normalizeSlug(body.slug);
+    } catch (e) {
+      return err(e instanceof Error ? e.message : "Bad slug", 400);
+    }
+    const existing = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
+    if (existing) return err("Slug already in use", 409);
+
+    const event: Event = {
+      slug,
+      name: body.name?.trim() || slug,
+      occasion: body.occasion?.trim() || "Event",
+      date: body.date?.trim() || new Date().toISOString().slice(0, 10),
+      welcomeMessage: body.welcomeMessage?.trim() || `Leave a message for the hosts of ${slug}.`,
+      themeColor: body.themeColor?.trim() || "#c9a14a",
+      headerImage: body.headerImage?.trim() || undefined,
+      status: body.status === "closed" ? "closed" : "open",
+      createdAt: Date.now(),
+      ownerEmail: email,
+    };
+    await upsertEvent(c.env, PROJECT_ID, event, { useAdmin: true });
+    return event;
+  })
+);
+
+app.put(
+  "/api/admin/events/:slug",
+  withOwnerErrors(async (c, email) => {
+    const slug = c.req.param("slug")!;
+    const existing = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
+    if (!existing) return err("Event not found", 404);
+    if (existing.ownerEmail.toLowerCase() !== email.toLowerCase()) {
+      return err("Not the owner of this event", 403);
+    }
+    const body = (await c.req.json().catch(() => ({}))) as Partial<Event>;
+    const updated: Event = {
+      ...existing,
+      name: body.name?.trim() || existing.name,
+      occasion: body.occasion?.trim() || existing.occasion,
+      date: body.date?.trim() || existing.date,
+      welcomeMessage: body.welcomeMessage?.trim() || existing.welcomeMessage,
+      themeColor: body.themeColor?.trim() || existing.themeColor,
+      headerImage:
+        body.headerImage !== undefined ? body.headerImage?.trim() || undefined : existing.headerImage,
+      status: body.status === "closed" || body.status === "open" ? body.status : existing.status,
+    };
+    await upsertEvent(c.env, PROJECT_ID, updated, { useAdmin: true });
+    return updated;
   })
 );
 
@@ -524,12 +641,45 @@ app.delete(
 
 // ─────────────────────────────────────────────────────────────────────────
 // Static page routes (delegate to ASSETS binding)
-// Cloudflare Pages-style routing: "/" → "index.html", "/admin" → "admin.html"
+//
+// Routing model:
+//   /                            → index.html (which calls /api/events → first event or empty state)
+//   /{slug}                      → index.html (with ?slug=... pre-applied)
+//   /{slug}/admin                → admin.html
+//   /{slug}/thank-you            → thank-you.html
+//   /admin                       → admin.html (redirects to first event's admin)
+//   /thank-you                   → thank-you.html (legacy)
+//
+// Slug pattern: lowercase, 1-50 chars, letters/digits/hyphens.
+// We pass the slug to the static pages via a query string so the JS can
+// read it from `location.search` (or location.pathname).
 // ─────────────────────────────────────────────────────────────────────────
 
+const SLUG_RE = /^\/([a-z0-9-]{1,50})(?:\/(admin|thank-you))?\/?$/;
+
 app.get("/", (c) => c.env.ASSETS.fetch(new URL("/index.html", c.req.url)));
+
 app.get("/admin", (c) => c.env.ASSETS.fetch(new URL("/admin.html", c.req.url)));
+
 app.get("/thank-you", (c) => c.env.ASSETS.fetch(new URL("/thank-you.html", c.req.url)));
+
+app.get("/:slug", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/index.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
+app.get("/:slug/admin", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/admin`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/admin.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
+app.get("/:slug/thank-you", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/thank-you`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/thank-you.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // 404

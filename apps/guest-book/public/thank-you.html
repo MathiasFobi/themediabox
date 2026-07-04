@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TheMediaBox · Thank you</title>
+<title>Thank you</title>
 <style>
   body { font-family: ui-serif, Georgia, serif; background: #fbf7ef; color: #1a1a1a; margin: 0; }
   main { max-width: 560px; margin: 80px auto; text-align: center; padding: 0 20px; }
@@ -20,11 +20,14 @@
   <h1>Thank you 💛</h1>
   <p>Your message has been submitted. The hosts will review and approve it shortly — you'll know when it goes live.</p>
   <div class="ref" id="ref">Entry ID: —</div>
-  <p style="margin-top: 32px;"><a href="/">← Leave another message</a></p>
+  <p style="margin-top: 32px;"><a id="back-link" href="/">← Back to the event</a></p>
 </main>
 <script>
   const id = new URLSearchParams(location.search).get("id");
   if (id) document.getElementById("ref").textContent = `Entry ID: ${id}`;
+  // Back link: prefer returning to the same event, fallback to root
+  const m = location.pathname.match(/^\/([a-z0-9-]{1,50})\/thank-you/);
+  if (m) document.getElementById("back-link").href = `/${m[1]}`;
 </script>
 </body>
 </html>

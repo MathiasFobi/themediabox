@@ -67,7 +67,7 @@ export async function createGuest(
     if (v === undefined) continue;
     fields[k] = toFirestoreValue(v);
   }
-  const res = await fdocs(docUrl(projectId, guest.id), env, {
+  const res = await fdocs(docUrl(projectId, `${guest.eventSlug}__${guest.id}`), env, {
     method: "PATCH", // upsert — PATCH on the doc URL is create-or-replace
     idToken: opts.idToken,
     useAdmin: opts.useAdmin,
@@ -102,6 +102,7 @@ export async function listGuests(
   env: Env,
   projectId: string,
   opts: {
+    eventSlug?: string;     // filter to a single event
     status?: "pending" | "approved" | "rejected";
     limit?: number;
     useAdmin?: boolean;
@@ -112,18 +113,42 @@ export async function listGuests(
   // POST /documents:runQuery with a RunQueryRequest body. The GET /documents
   // endpoint only supports simple "from"/"pageSize" — no filters.
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+
+  // Build the where clause. Single composite: match eventSlug AND status.
+  // (eventSlug defaults to a string; status is optional.)
+  const filters: Array<{ field: string; op: string; value: string | null }> = [];
+  if (opts.eventSlug) filters.push({ field: "eventSlug", op: "EQUAL", value: opts.eventSlug });
+  if (opts.status) filters.push({ field: "status", op: "EQUAL", value: opts.status });
+
+  let whereClause: unknown = undefined;
+  if (filters.length === 1) {
+    const f = filters[0];
+    whereClause = {
+      fieldFilter: {
+        field: { fieldPath: f.field },
+        op: f.op,
+        value: { stringValue: f.value },
+      },
+    };
+  } else if (filters.length > 1) {
+    whereClause = {
+      compositeFilter: {
+        op: "AND",
+        filters: filters.map((f) => ({
+          fieldFilter: {
+            field: { fieldPath: f.field },
+            op: f.op,
+            value: { stringValue: f.value },
+          },
+        })),
+      },
+    };
+  }
+
   const body = {
     structuredQuery: {
       from: [{ collectionId: "guests" }],
-      where: opts.status
-        ? {
-            fieldFilter: {
-              field: { fieldPath: "status" },
-              op: "EQUAL",
-              value: { stringValue: opts.status },
-            },
-          }
-        : undefined,
+      where: whereClause,
       orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
       limit: opts.limit ?? 50,
     },
@@ -138,7 +163,6 @@ export async function listGuests(
     const text = await res.text();
     throw new Error(`Firestore list failed: ${res.status} ${text}`);
   }
-  // runQuery returns an array of { document?: { fields: ... }, readTime: ... }
   const rows = (await res.json()) as Array<{ document?: FirestoreDoc }>;
   return rows
     .filter((r) => r.document)

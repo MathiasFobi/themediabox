@@ -359,6 +359,7 @@
         toWhom: $("toWhom").value.trim(),
         occasion: $("occasion").value.trim(),
         message: $("message").value.trim() || undefined,
+        eventSlug: window.__EVENT_SLUG__,
         streamUid,
       };
       const submitRes = await fetch("/api/guests", {
@@ -445,14 +446,116 @@
 
   // Boot
   setupCamera();
-  loadFeed();
+  boot();
 })();
+
+// Read the slug from the URL. Two patterns:
+//   /{slug}                  → location.pathname.split("/")[1]
+//   /{slug}?slug=...         → also support query (legacy + admin deep links)
+//   /                        → no slug — show event picker
+function getSlugFromUrl() {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("slug")) return qs.get("slug");
+  const m = location.pathname.match(/^\/([a-z0-9-]{1,50})(?:\/|$)/);
+  if (m) return m[1];
+  return null;
+}
+
+async function boot() {
+  const slug = getSlugFromUrl();
+  if (!slug) {
+    // No slug — render an event picker from /api/events
+    const intro = document.getElementById("feed-intro");
+    const grid = document.getElementById("feed");
+    try {
+      const res = await fetch("/api/events");
+      const { events } = await res.json();
+      if (!events || !events.length) {
+        intro.textContent = "No events yet. Check back soon.";
+        return;
+      }
+      intro.textContent = "Choose an event to view its messages.";
+      grid.innerHTML = "";
+      for (const ev of events) {
+        const card = document.createElement("a");
+        card.className = "feed-card";
+        card.href = `/${encodeURIComponent(ev.slug)}`;
+        card.innerHTML = `
+          <div class="meta" style="aspect-ratio:auto; padding: 16px;">
+            <div class="name">${escapeHtml(ev.name)}</div>
+            <div class="sub">${escapeHtml(ev.occasion)} · ${escapeHtml(ev.date)}</div>
+            ${ev.welcomeMessage ? `<div class="msg" style="font-style:normal; color: var(--muted);">${escapeHtml(ev.welcomeMessage)}</div>` : ""}
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    } catch (e) {
+      intro.textContent = "Couldn't load events.";
+    }
+    return;
+  }
+
+  window.__EVENT_SLUG__ = slug;
+
+  // Load event details for branding
+  try {
+    const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
+    if (res.ok) {
+      const event = await res.json();
+      applyEventBranding(event);
+      // Hide the form if event is closed
+      if (event.status === "closed") {
+        const btn = document.getElementById("open-form-btn");
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Submissions closed";
+          btn.title = "The host has closed this event to new submissions.";
+        }
+      }
+    } else if (res.status === 404) {
+      document.getElementById("feed-intro").textContent = "Event not found.";
+      return;
+    }
+  } catch (e) {
+    console.warn("event load failed", e);
+  }
+
+  loadFeed();
+}
+
+function applyEventBranding(event) {
+  // Header text
+  const h1 = document.querySelector("header h1");
+  if (h1) h1.textContent = event.name;
+  const sub = document.querySelector("header p");
+  if (sub) sub.textContent = event.welcomeMessage;
+  // Theme color → CSS variable
+  if (event.themeColor) {
+    document.documentElement.style.setProperty("--gold", event.themeColor);
+    document.documentElement.style.setProperty("--gold-deep", shadeColor(event.themeColor, -20));
+  }
+  // Update step-1's "toWhom" placeholder to the event name
+  const toWhomInput = document.getElementById("toWhom");
+  if (toWhomInput) toWhomInput.placeholder = `e.g. ${event.name}`;
+  // Update default occasion text
+  const occInput = document.getElementById("occasion");
+  if (occInput && !occInput.value) occInput.placeholder = event.occasion;
+}
+
+function shadeColor(hex, percent) {
+  // Tiny helper: darken/lighten a hex color by `percent` (-100 to 100).
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + percent));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
+  const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
 
 async function loadFeed() {
   const intro = document.getElementById("feed-intro");
   const grid = document.getElementById("feed");
   try {
-    const res = await fetch("/api/guests?status=approved&limit=50");
+    const res = await fetch(`/api/guests?status=approved&eventSlug=${encodeURIComponent(window.__EVENT_SLUG__)}&limit=50`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { guests } = await res.json();
     if (!guests.length) {
