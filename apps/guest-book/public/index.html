@@ -126,7 +126,7 @@
     <p>Leave a heartfelt message for the hosts. They'll cherish it forever.</p>
   </header>
 
-  <section class="step" id="step-details">
+  <section class="step hidden" id="step-details">
     <h2>1 · Your details</h2>
     <p>Tell us a little about yourself so the hosts know who the message is from.</p>
     <div class="form-row">
@@ -189,6 +189,9 @@
   <section class="step" id="step-feed">
     <h2>Messages from loved ones</h2>
     <p id="feed-intro">Loading the latest approved messages…</p>
+    <div class="controls" style="margin-top: 12px;">
+      <button class="primary" id="open-form-btn">✦ Leave a message</button>
+    </div>
     <div id="feed" class="feed-grid"></div>
   </section>
 </main>
@@ -202,6 +205,11 @@
   const hide = (id) => $(id).classList.add("hidden");
 
   // ── Step nav
+  $("open-form-btn").onclick = () => {
+    hide("step-feed");
+    show("step-details");
+  };
+
   $("next-1").onclick = () => {
     const name = $("name").value.trim();
     const toWhom = $("toWhom").value.trim();
