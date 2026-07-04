@@ -22,6 +22,7 @@ export interface Env {
   // Secrets
   CLOUDFLARE_STREAM_TOKEN: string;
   FIREBASE_PRIVATE_KEY?: string;
+  FIREBASE_WEB_API_KEY?: string;  // The apiKey from the Firebase web app config
 }
 
 export interface GuestBook {

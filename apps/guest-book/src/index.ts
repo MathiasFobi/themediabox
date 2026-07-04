@@ -117,12 +117,17 @@ app.post("/api/admin/login", async (c) => {
     console.error("admin login: token verification failed", e);
     return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
   }
-  if (!claims.email_verified) return err("Email not verified", 403);
+  // Owner check first (cheaper, and avoids leaking verification state to
+  // non-owners). Verification status is reported back in the response so
+  // the admin UI can prompt the user to verify if needed.
   if (claims.email.toLowerCase() !== c.env.OWNER_EMAIL.toLowerCase()) {
     return err("Not the owner", 403);
   }
 
-  // 7-day session cookie (httpOnly, sameSite=Lax, secure in prod)
+  // 7-day session cookie (httpOnly, sameSite=Lax, secure in prod).
+  // The session is granted even if email is unverified — moderation actions
+  // will still be blocked at the route level (requireOwner enforces verified).
+  // This lets the admin UI show a "please verify" prompt + send button.
   const maxAge = 60 * 60 * 24 * 7;
   const cookie = [
     `__session=${encodeURIComponent(body.idToken)}`,
@@ -133,7 +138,83 @@ app.post("/api/admin/login", async (c) => {
     c.env.APP_URL.startsWith("https://") ? "Secure" : "",
   ].filter(Boolean).join("; ");
 
-  return json({ ok: true, email: claims.email }, 200, { "Set-Cookie": cookie });
+  return json(
+    {
+      ok: true,
+      email: claims.email,
+      emailVerified: claims.email_verified,
+    },
+    200,
+    { "Set-Cookie": cookie }
+  );
+});
+
+/**
+ * Send a Firebase verification email to the current user.
+ *
+ * Uses the Identity Toolkit REST API: POST accounts:sendOobCode with
+ * requestType=VERIFY_EMAIL. The email is delivered by Firebase (the
+ * "from" address and link domain depend on what's configured in the
+ * Firebase console's Authentication → Templates section).
+ *
+ * Requires an authenticated session (owner) — the email is sent to the
+ * caller's own address, derived from the verified ID token, not from any
+ * client-supplied input.
+ */
+app.post("/api/admin/send-verification", async (c) => {
+  // Verify the caller is the owner (and that their ID token is valid).
+  // We don't gate on email_verified here — that's the whole point of the
+  // endpoint (unverified users need a way to trigger it).
+  const token = extractIdToken(c.req.raw);
+  if (!token) return err("Missing auth token", 401);
+  let claims;
+  try {
+    claims = await verifyFirebaseIdToken(token, PROJECT_ID);
+  } catch (e) {
+    return err(`Invalid ID token: ${e instanceof Error ? e.message : String(e)}`, 401);
+  }
+  if (claims.email.toLowerCase() !== c.env.OWNER_EMAIL.toLowerCase()) {
+    return err("Not the owner", 403);
+  }
+  if (claims.email_verified) {
+    return err("Email already verified", 400);
+  }
+
+  // Call Identity Toolkit to send the verification email. Firebase Auth
+  // requires the Web API key (the same one used in the client-side config).
+  // We pass it via env so it isn't committed; the SDK key was set when the
+  // Firebase web app was registered. We re-fetch from env if available, but
+  // a fallback isn't ideal — the user should set FIREBASE_WEB_API_KEY.
+  const webApiKey = c.env.FIREBASE_WEB_API_KEY;
+  if (!webApiKey) {
+    return err(
+      "FIREBASE_WEB_API_KEY not configured. Set it via `wrangler secret put FIREBASE_WEB_API_KEY` (use the apiKey from the Firebase web app config).",
+      500
+    );
+  }
+
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${webApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestType: "VERIFY_EMAIL",
+          idToken: token,
+        }),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("sendOobCode failed", res.status, text);
+      return err(`Firebase rejected the request: ${res.status} ${text}`, 502);
+    }
+    return json({ ok: true, message: "Verification email sent" });
+  } catch (e) {
+    console.error("send-verification error", e);
+    return err(e instanceof Error ? e.message : "Failed to send", 500);
+  }
 });
 
 app.post("/api/admin/logout", () => {

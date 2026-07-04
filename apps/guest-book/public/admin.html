@@ -72,6 +72,13 @@
 
   <!-- Moderation panel (after sign-in) -->
   <div id="mod-panel" class="hidden">
+    <div id="verify-banner" class="hidden" style="background: #fff4e0; border: 1px solid #f0c46e; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+      <strong>Email not verified.</strong> You'll be able to sign in but moderation actions are disabled until you verify your email.
+      <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+        <button id="send-verify-btn">Send verification email</button>
+        <span id="verify-status" style="font-size: 13px; color: var(--muted);"></span>
+      </div>
+    </div>
     <div class="tabs">
       <button data-status="pending" class="active">Pending</button>
       <button data-status="approved">Approved</button>
@@ -121,11 +128,35 @@
         const t = await res.text();
         throw new Error(t || `Login failed: ${res.status}`);
       }
-      onSignedIn(cred.user.email);
+      const loginData = await res.json();
+      onSignedIn(cred.user.email, loginData.emailVerified);
     } catch (e) {
       $("login-status").textContent = e.message || String(e);
     } finally {
       $("signin-btn").disabled = false;
+    }
+  };
+
+  $("send-verify-btn").onclick = async () => {
+    $("send-verify-btn").disabled = true;
+    $("verify-status").textContent = "Sending…";
+    $("verify-status").classList.remove("ok", "error");
+    try {
+      const res = await fetch("/api/admin/send-verification", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Failed: ${res.status}`);
+      }
+      $("verify-status").textContent = "Verification email sent — check your inbox and click the link.";
+      $("verify-status").classList.add("ok");
+    } catch (e) {
+      $("verify-status").textContent = e.message || String(e);
+      $("verify-status").classList.add("error");
+    } finally {
+      $("send-verify-btn").disabled = false;
     }
   };
 
@@ -147,11 +178,16 @@
     };
   });
 
-  function onSignedIn(email) {
-    $("user-email").textContent = email;
+  function onSignedIn(email, emailVerified) {
+    $("user-email").textContent = email + (emailVerified ? "" : " (unverified)");
     show("logout-btn");
     hide("login-panel");
     show("mod-panel");
+    if (!emailVerified) {
+      show("verify-banner");
+    } else {
+      hide("verify-banner");
+    }
     load();
   }
 
@@ -269,7 +305,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
-      if (res.ok) onSignedIn(user.email);
+      if (res.ok) {
+        const data = await res.json();
+        onSignedIn(user.email, data.emailVerified);
+      }
     } catch {}
   });
 </script>
