@@ -102,14 +102,26 @@ export async function upsertEvent(
   env: Env,
   projectId: string,
   event: Event,
-  opts: { useAdmin?: boolean; idToken?: string } = {}
+  opts: { useAdmin?: boolean; idToken?: string; updateOnly?: string[] } = {}
 ): Promise<Event> {
   const fields: Record<string, FirestoreValue> = {};
   for (const [k, v] of Object.entries(event)) {
     if (v === undefined) continue;
     fields[k] = toFirestoreValue(v);
   }
-  const res = await fdocs(eventUrl(projectId, event.slug), env, {
+
+  // Firestore REST API quirk: PATCH on a document URL without an
+  // `updateMask.fieldPaths` parameter REPLACES the entire document (only
+  // the fields in the body remain). For partial updates we MUST include
+  // the mask listing exactly the fields we want to write.
+  let url = eventUrl(projectId, event.slug);
+  if (opts.updateOnly && opts.updateOnly.length) {
+    const mask = new URLSearchParams();
+    for (const f of opts.updateOnly) mask.append("updateMask.fieldPaths", f);
+    url += `?${mask.toString()}`;
+  }
+
+  const res = await fdocs(url, env, {
     method: "PATCH",
     useAdmin: opts.useAdmin,
     idToken: opts.idToken,

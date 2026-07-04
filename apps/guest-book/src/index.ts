@@ -601,7 +601,22 @@ app.put(
         body.promoVideoId !== undefined ? (promoVideoId || undefined) : existing.promoVideoId,
       status: body.status === "closed" || body.status === "open" ? body.status : existing.status,
     };
-    await upsertEvent(c.env, PROJECT_ID, updated, { useAdmin: true });
+    // Pass updateOnly with every editable field so we PARTIAL-update rather
+    // than replace (the Firestore REST PATCH without a mask would nuke
+    // fields not in the body — including ones we don't track here).
+    await upsertEvent(c.env, PROJECT_ID, updated, {
+      useAdmin: true,
+      updateOnly: [
+        "name",
+        "occasion",
+        "date",
+        "welcomeMessage",
+        "themeColor",
+        "headerImage",
+        "promoVideoId",
+        "status",
+      ],
+    });
     return updated;
   })
 );
