@@ -154,24 +154,26 @@ export async function updateGuestStatus(
   rejectReason: string | undefined,
   opts: { useAdmin?: boolean; idToken?: string } = {}
 ): Promise<GuestBook> {
-  const body = {
-    fields: {
-      status: toFirestoreValue(status),
-      moderatedAt: toFirestoreValue(Date.now()),
-      moderatedBy: toFirestoreValue(moderator),
-      ...(rejectReason ? { rejectReason: toFirestoreValue(rejectReason) } : {}),
-    },
+  const fields: Record<string, FirestoreValue> = {
+    status: toFirestoreValue(status),
+    moderatedAt: toFirestoreValue(Date.now()),
+    moderatedBy: toFirestoreValue(moderator),
   };
-  const url =
-    `${docUrl(projectId, id)}?` +
-    new URLSearchParams({
-      "updateMask.fieldPaths": ["status", "moderatedAt", "moderatedBy", "rejectReason"].join("&updateMask.fieldPaths="),
-    });
+  const maskFields: string[] = ["status", "moderatedAt", "moderatedBy"];
+  if (rejectReason) {
+    fields.rejectReason = toFirestoreValue(rejectReason);
+    maskFields.push("rejectReason");
+  }
+  // Build the updateMask as a multi-value query param. URLSearchParams.set()
+  // collapses to a single value, so we use append() per field.
+  const updateMask = new URLSearchParams();
+  for (const f of maskFields) updateMask.append("updateMask.fieldPaths", f);
+  const url = `${docUrl(projectId, id)}?${updateMask.toString()}`;
   const res = await fdocs(url, env, {
     method: "PATCH",
     idToken: opts.idToken,
     useAdmin: opts.useAdmin,
-    body,
+    body: { fields },
   });
   if (!res.ok) {
     const text = await res.text();
