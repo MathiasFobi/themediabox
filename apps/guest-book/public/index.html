@@ -319,6 +319,20 @@
     <p>Watch the messages → <a id="feed-link" href="/feed" style="color: var(--gold-deep); font-weight: 600;">/feed</a></p>
     <p style="margin-top: 6px;">More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">themediabox.vercel.app</a></p>
   </footer>
+  <script>
+    // Inline script (no defer) — set the feed link to use the current event slug
+    // so the link works even before the main module loads.
+    (() => {
+      const m = location.pathname.match(/^\/([a-z0-9-]{1,50})(?:\/|$)/);
+      if (m) {
+        const slug = m[1];
+        const link = document.getElementById("feed-link");
+        if (link) link.href = `/${slug}/feed`;
+        const host = document.getElementById("host-link");
+        if (host) host.href = `/${slug}/admin`;
+      }
+    })();
+  </script>
 </main>
 
 <script>
@@ -576,8 +590,9 @@ function getSlugFromUrl() {
   const qs = new URLSearchParams(location.search);
   if (qs.get("slug")) return qs.get("slug");
   const m = location.pathname.match(/^\/([a-z0-9-]{1,50})(?:\/|$)/);
-  if (m) return m[1];
-  return null;
+  if (m && !["admin", "feed", "thank-you"].includes(m[1])) return m[1];
+  // No slug in path → fall back to "default" (single-event bootstrap)
+  return "default";
 }
 
 async function boot() {

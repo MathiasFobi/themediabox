@@ -144,10 +144,14 @@
 <script>
 (() => {
   const qs = new URLSearchParams(location.search);
-  const slug = qs.get("slug") || (location.pathname.match(/^\/([a-z0-9-]{1,50})\/feed/) || [])[1] || null;
+  let slug = qs.get("slug");
   if (!slug) {
-    document.getElementById("count").textContent = "No event specified.";
-    return;
+    const m = location.pathname.match(/^\/([a-z0-9-]{1,50})\/feed/);
+    if (m && m[1] !== "feed") slug = m[1];
+  }
+  if (!slug) {
+    // Fall back to "default" — single-event bootstrap
+    slug = "default";
   }
 
   // Set the "Record a message" link to point at the form

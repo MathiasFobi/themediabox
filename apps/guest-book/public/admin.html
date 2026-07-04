@@ -185,7 +185,7 @@
   //   /admin              (no slug)     → show "select an event" prompt
   const _qsSlug = new URLSearchParams(location.search).get("slug");
   const _pathMatch = location.pathname.match(/^\/([a-z0-9-]{1,50})\/admin/);
-  window.__EVENT_SLUG__ = _qsSlug || (_pathMatch ? _pathMatch[1] : null);
+  window.__EVENT_SLUG__ = _qsSlug || (_pathMatch ? _pathMatch[1] : null) || "default";
 
   const $ = (id) => document.getElementById(id);
   const show = (id) => $(id).classList.remove("hidden");

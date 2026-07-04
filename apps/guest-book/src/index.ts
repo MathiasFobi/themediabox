@@ -869,9 +869,21 @@ app.get("/:slug", (c) => {
   return c.env.ASSETS.fetch(new URL(`/index.html?slug=${encodeURIComponent(slug)}`, c.req.url));
 });
 
+app.get("/:slug/", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/index.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
 app.get("/:slug/admin", (c) => {
   const slug = c.req.param("slug");
   if (!SLUG_RE.test(`/${slug}/admin`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/admin.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
+app.get("/:slug/admin/", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/admin/`)) return err("Not found", 404);
   return c.env.ASSETS.fetch(new URL(`/admin.html?slug=${encodeURIComponent(slug)}`, c.req.url));
 });
 
@@ -881,10 +893,22 @@ app.get("/:slug/thank-you", (c) => {
   return c.env.ASSETS.fetch(new URL(`/thank-you.html?slug=${encodeURIComponent(slug)}`, c.req.url));
 });
 
+app.get("/:slug/thank-you/", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/thank-you/`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/thank-you.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
 // Public feed — separate from the form. Shows approved messages.
 app.get("/:slug/feed", (c) => {
   const slug = c.req.param("slug");
   if (!SLUG_RE.test(`/${slug}/feed`)) return err("Not found", 404);
+  return c.env.ASSETS.fetch(new URL(`/feed.html?slug=${encodeURIComponent(slug)}`, c.req.url));
+});
+
+app.get("/:slug/feed/", (c) => {
+  const slug = c.req.param("slug");
+  if (!SLUG_RE.test(`/${slug}/feed/`)) return err("Not found", 404);
   return c.env.ASSETS.fetch(new URL(`/feed.html?slug=${encodeURIComponent(slug)}`, c.req.url));
 });
 
