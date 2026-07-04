@@ -91,7 +91,7 @@
 <!-- Firebase compat SDK (loaded from gstatic; we use the modular API via dynamic import) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBexCqxBTBo9M3xa2JLp1SiWFQd5NzDteI",
@@ -295,21 +295,27 @@
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  // Firebase Auth state listener (only fires after the user signs in)
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
-    try {
-      const idToken = await user.getIdToken();
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        onSignedIn(user.email, data.emailVerified);
-      }
-    } catch {}
+  // Firebase Auth state listener — fires on sign-in AND on token refresh
+  // (which happens automatically every ~55 min, OR immediately after the
+  // user verifies their email and Firebase issues a new token). On any
+  // change, re-exchange the ID token with the Worker so the session cookie
+  // reflects the latest claims (especially email_verified).
+  import("https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js").then(({ onIdTokenChanged }) => {
+    onIdTokenChanged(auth, async (user) => {
+      if (!user) return;
+      try {
+        const idToken = await user.getIdToken(true); // force refresh
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          onSignedIn(user.email, data.emailVerified);
+        }
+      } catch {}
+    });
   });
 </script>
 </body>
