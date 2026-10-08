@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Messages · TheMediaBox</title>
+<style>
+  :root {
+    --gold: #c9a14a;
+    --gold-deep: #a17a25;
+    --ink: #1a1a1a;
+    --muted: #5a5a5a;
+    --paper: #fbf7ef;
+    --line: #e6dfd0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: ui-serif, Georgia, "Times New Roman", serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; position: relative; }
+  header .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
+  header h1 { font-size: 40px; margin: 8px 0 4px; font-weight: 700; }
+  header p { color: var(--muted); margin: 0; font-size: 16px; }
+  header .header-actions { margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  header .header-actions a {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  header .header-actions a.primary { background: var(--gold); color: #1a1a1a; border-color: var(--gold-deep); }
+  header .header-actions a.primary:hover { background: var(--gold-deep); color: #fff; }
+
+  .filter-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-row label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .filter-row input, .filter-row select {
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+  }
+  .filter-row input { flex: 1; min-width: 200px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--line); }
+  .card .thumb { aspect-ratio: 9/16; background: #000; position: relative; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .thumb .play {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 22px;
+    pointer-events: none;
+  }
+  .card .meta { padding: 12px 14px; }
+  .card .meta .name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .card .meta .sub { font-size: 12px; color: var(--muted); }
+  .card .meta .msg {
+    font-size: 13px; color: var(--ink); margin-top: 8px;
+    font-style: italic;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty .crest { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+
+  .count { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+  footer {
+    text-align: center;
+    padding: 32px 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 48px;
+  }
+  footer a { color: var(--gold-deep); font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">✦ TheMediaBox</div>
+    <h1 id="event-name">Messages</h1>
+    <p id="event-sub">Approved messages from loved ones</p>
+    <div class="header-actions">
+      <a class="primary" id="record-link" href="/">✦ Record a message</a>
+    </div>
+  </header>
+
+  <div class="filter-row">
+    <label for="filter-name">Filter by name:</label>
+    <input id="filter-name" type="search" placeholder="e.g. Maya" />
+    <label for="filter-occasion">Occasion:</label>
+    <select id="filter-occasion">
+      <option value="">All occasions</option>
+    </select>
+  </div>
+
+  <p class="count" id="count">Loading…</p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <p>More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener">themediabox.vercel.app</a></p>
+</footer>
+
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  let slug = qs.get("slug");
+  if (!slug) {
+    const m = location.pathname.match(/^\/([a-z0-9-]{1,50})\/feed/);
+    if (m && m[1] !== "feed") slug = m[1];
+  }
+  if (!slug) {
+    // Fall back to "default" — single-event bootstrap
+    slug = "default";
+  }
+
+  // Set the "Record a message" link to point at the form
+  const recordLink = document.getElementById("record-link");
+  if (recordLink) recordLink.href = `/${encodeURIComponent(slug)}`;
+
+  let allGuests = [];
+
+  async function load() {
+    // 1) Load event for branding
+    try {
+      const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
+      if (res.ok) {
+        const ev = await res.json();
+        const h1 = document.getElementById("event-name");
+        if (h1) h1.textContent = ev.name || "Messages";
+        const sub = document.getElementById("event-sub");
+        if (sub) sub.textContent = ev.welcomeMessage || "Approved messages from loved ones";
+        if (ev.themeColor) {
+          document.documentElement.style.setProperty("--gold", ev.themeColor);
+          document.documentElement.style.setProperty("--gold-deep", shadeColor(ev.themeColor, -20));
+        }
+        document.title = `${ev.name} · Messages`;
+      } else if (res.status === 404) {
+        document.getElementById("count").textContent = "Event not found.";
+        return;
+      }
+    } catch (e) {
+      console.warn("event load failed", e);
+    }
+
+    // 2) Load approved guests
+    try {
+      const res = await fetch(`/api/guests?eventSlug=${encodeURIComponent(slug)}&status=approved&limit=200`);
+      if (!res.ok) {
+        document.getElementById("count").textContent = "Couldn't load messages.";
+        return;
+      }
+      const data = await res.json();
+      allGuests = data.guests || [];
+      populateOccasionFilter(allGuests);
+      render();
+    } catch (e) {
+      document.getElementById("count").textContent = "Couldn't load messages.";
+    }
+  }
+
+  function populateOccasionFilter(guests) {
+    const sel = document.getElementById("filter-occasion");
+    const occasions = Array.from(
+      new Set(guests.map((g) => g.occasion).filter(Boolean))
+    ).sort();
+    for (const o of occasions) {
+      const opt = document.createElement("option");
+      opt.value = o;
+      opt.textContent = o;
+      sel.appendChild(opt);
+    }
+  }
+
+  function render() {
+    const nameQ = document.getElementById("filter-name").value.trim().toLowerCase();
+    const occQ = document.getElementById("filter-occasion").value;
+    let filtered = allGuests;
+    if (nameQ) {
+      filtered = filtered.filter((g) =>
+        (g.name || "").toLowerCase().includes(nameQ) ||
+        (g.toWhom || "").toLowerCase().includes(nameQ)
+      );
+    }
+    if (occQ) {
+      filtered = filtered.filter((g) => g.occasion === occQ);
+    }
+
+    const count = document.getElementById("count");
+    if (!allGuests.length) {
+      count.textContent = "No approved messages yet. Check back soon!";
+      document.getElementById("grid").innerHTML = `
+        <div class="empty" style="grid-column: 1 / -1;">
+          <div class="crest">✦</div>
+          <p>Be the first to <a href="/${encodeURIComponent(slug)}" style="color: var(--gold-deep); font-weight: 600;">leave a message</a>.</p>
+        </div>`;
+      return;
+    }
+    const filtered_count = filtered.length;
+    count.textContent = filtered_count === allGuests.length
+      ? `${allGuests.length} ${allGuests.length === 1 ? "message" : "messages"}`
+      : `${filtered_count} of ${allGuests.length} messages`;
+
+    const grid = document.getElementById("grid");
+    if (!filtered_count) {
+      grid.innerHTML = `<div class="empty" style="grid-column: 1 / -1;"><div class="crest">∅</div><p>No matches. Try a different filter.</p></div>`;
+      return;
+    }
+    grid.innerHTML = filtered.map((g) => `
+      <a class="card" href="${g.streamWatchUrl || g.streamPlaybackUrl || '#'}" target="_blank" rel="noopener" data-id="${g.id}">
+        <div class="thumb">
+          <img src="${g.streamThumbnailUrl || ''}" alt="" loading="lazy" />
+          <div class="play">▶</div>
+        </div>
+        <div class="meta">
+          <div class="name">${escapeHtml(g.name)}</div>
+          <div class="sub">→ ${escapeHtml(g.toWhom)} · ${escapeHtml(g.occasion)}</div>
+          ${g.message ? `<div class="msg">"${escapeHtml(g.message)}"</div>` : ""}
+        </div>
+      </a>
+    `).join("");
+  }
+
+  document.getElementById("filter-name").addEventListener("input", render);
+  document.getElementById("filter-occasion").addEventListener("change", render);
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function shadeColor(hex, percent) {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const r = Math.max(0, Math.min(255, (num >> 16) + percent));
+    const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
+    const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
