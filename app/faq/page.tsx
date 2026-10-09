@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "PayPal — including PayPal balance, credit card, debit card, and Pay in 4. Apple Pay and Google Pay are also supported through PayPal's checkout.",
+    a: "Stripe — we accept all major credit and debit cards, plus Apple Pay and Google Pay, through Stripe's secure checkout. We never see or store your card details.",
   },
   {
     q: "Can I order in bulk for an event planner, wedding planner, or corporate client?",

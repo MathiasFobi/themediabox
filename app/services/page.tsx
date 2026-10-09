@@ -5,7 +5,7 @@ import Link from "next/link";
 import services from "@/data/services.json";
 import type { Service } from "../types";
 import { SERVICE_CATEGORIES } from "../types";
-import { PayPalModal } from "../components/PayPalModal";
+import { StripeCheckoutModal } from "../components/StripeCheckoutModal";
 
 const allServices = services as unknown as Service[];
 
@@ -41,7 +41,7 @@ export default function ServicesPage() {
             Delivered in under 1 hour
           </span>
           <span className="px-2.5 py-1 rounded-md border border-border-glass bg-bg-glass">
-            PayPal checkout
+            Secure Stripe checkout
           </span>
           <Link
             href="/products"
@@ -161,143 +161,16 @@ export default function ServicesPage() {
       </section>
 
       {selectedService && (
-        <ServicePayPalModal
-          service={selectedService}
+        <StripeCheckoutModal
+          emoji={selectedService.emoji}
+          title={selectedService.title}
+          priceDisplay={`$${selectedService.price}`}
+          priceCaption="per person"
+          checkoutNote="Set your headcount, add style notes, and check out on the secure Stripe page — your email is collected there so we can deliver your photos."
+          stripeLink={selectedService.stripeLink}
           onClose={() => setSelectedService(null)}
         />
       )}
     </main>
-  );
-}
-
-function ServicePayPalModal({
-  service,
-  onClose,
-}: {
-  service: Service;
-  onClose: () => void;
-}) {
-  const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
-  const [quantity, setQuantity] = useState(1);
-
-  const total = (service.price * quantity).toFixed(2);
-
-  const handlePayPal = () => {
-    window.open(
-      `https://paypal.me/themediabox/${total}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
-    onClose();
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm animate-fade-up"
-      onClick={onClose}
-    >
-      <div
-        className="glass-panel max-w-lg w-full p-6 sm:p-8 gold-border max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <div className="text-4xl mb-2">{service.emoji}</div>
-            <h3 className="font-display font-bold text-2xl text-text-primary">
-              {service.title}
-            </h3>
-            <p className="text-text-secondary text-sm mt-1">
-              ${service.price} per person
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-bg-glass hover:bg-bg-glass-hover border border-border-glass flex items-center justify-center text-text-tertiary text-lg leading-none"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-text-tertiary mb-2">
-              Your email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              className="glass-input w-full px-4 py-3 rounded-xl text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-text-tertiary mb-2">
-              Style notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Anything specific? Outfits, backgrounds, mood, references..."
-              rows={3}
-              className="glass-input w-full px-4 py-3 rounded-xl text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-text-tertiary mb-2">
-              How many people?
-            </label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-10 h-10 rounded-full bg-bg-glass hover:bg-bg-glass-hover border border-border-glass font-bold text-text-primary"
-                aria-label="Decrease quantity"
-              >
-                −
-              </button>
-              <div className="font-display font-bold text-2xl text-text-primary w-12 text-center tabular-nums">
-                {quantity}
-              </div>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-10 h-10 rounded-full bg-bg-glass hover:bg-bg-glass-hover border border-border-glass font-bold text-text-primary"
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-border-glass pt-4 mb-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-text-tertiary text-sm font-semibold uppercase tracking-wider">
-              Total
-            </span>
-            <span className="font-display font-bold text-3xl text-gold-deep tabular-nums">
-              ${total}
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handlePayPal}
-          className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white font-semibold py-4 rounded-full transition flex items-center justify-center gap-2 text-base"
-        >
-          <span className="italic font-bold">Pay</span>
-          <span className="italic font-bold">Pal</span>
-          <span className="font-semibold">· Pay ${total}</span>
-        </button>
-        <p className="text-text-muted text-[10px] text-center mt-3">
-          You'll be redirected to PayPal. After payment, email us at hello@themediabox.store with your reference photos and we'll get started within an hour.
-        </p>
-      </div>
-    </div>
   );
 }
