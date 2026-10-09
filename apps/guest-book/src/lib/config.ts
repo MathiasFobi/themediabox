@@ -4,9 +4,10 @@
  * Secrets (set with `wrangler secret put`):
  *   CLOUDFLARE_STREAM_TOKEN  — Account.Stream:Edit scope
  *   FIREBASE_PRIVATE_KEY     — (optional) Firebase Admin service account key, JSON-encoded
+ *   OWNER_EMAIL              — super-admin login email (must NOT be in wrangler.toml; repo is public)
  *
  * Vars (set in wrangler.toml):
- *   CF_ACCOUNT_ID, OWNER_EMAIL, APP_URL, MAX_RECORDING_SECONDS, MAX_UPLOAD_BYTES
+ *   CF_ACCOUNT_ID, APP_URL, MAX_RECORDING_SECONDS, MAX_UPLOAD_BYTES
  */
 export interface Env {
   // Bindings

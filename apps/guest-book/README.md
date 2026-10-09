@@ -54,12 +54,22 @@ pnpm wrangler secret put CLOUDFLARE_STREAM_TOKEN
 # paste the token with Account.Stream:Edit scope
 ```
 
+### 2b. Set the owner email (secret — never commit it)
+
+The super-admin login email used to live in `wrangler.toml`; it now lives in
+secrets since the repo is public. The worker fails closed (500) if unset.
+
+```bash
+pnpm wrangler secret put OWNER_EMAIL
+# paste the super-admin's login email (e.g. you@example.com)
+```
+
 ### 3. Firebase: enable Email/Password auth
 
 1. Open https://console.firebase.google.com/project/themediabox-guestbook/authentication/providers
 2. Enable **Email/Password**
 3. (Optional) Enable **Google** for a one-click sign-in
-4. Add `fobimathias@gmail.com` as a user under the **Users** tab
+4. Add your owner email (the same one you set as the `OWNER_EMAIL` secret) as a user under the **Users** tab
 
 ### 4. Firebase: create a service account
 
@@ -151,7 +161,7 @@ apps/guest-book/
 ## How the owner moderates
 
 1. Open `https://<host>/admin`
-2. Sign in with `fobimathias@gmail.com` (Email/Password or Google)
+2. Sign in with your owner email (Email/Password or Google)
 3. Firebase ID token is exchanged for a 7-day httpOnly session cookie
 4. Pending tab shows new entries with inline approve / reject / delete
 5. Approve flips `status` to `approved` → it appears in the public list
