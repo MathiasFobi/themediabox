@@ -60,7 +60,7 @@ export function ProductCard({
             onClick={() => onBuy(product)}
             className="btn-primary text-xs py-2 px-4 flex-1 justify-center"
           >
-            Buy with PayPal
+            Buy Now
           </button>
         </div>
       </div>

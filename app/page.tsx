@@ -8,7 +8,7 @@ import occasions from "@/data/occasions.json";
 import testimonials from "@/data/testimonials.json";
 import type { Product } from "./types";
 import { ProductCard } from "./components/ProductCard";
-import { PayPalModal } from "./components/PayPalModal";
+import { StripeCheckoutModal } from "./components/StripeCheckoutModal";
 
 const allProducts = products as unknown as Product[];
 
@@ -27,7 +27,7 @@ export default function Home() {
     []
   );
 
-  const [paypalProduct, setPaypalProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
   return (
     <main className="flex-1">
@@ -67,7 +67,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-gold" />
-                  PayPal checkout
+                  Secure Stripe checkout
                 </div>
               </div>
             </div>
@@ -152,7 +152,7 @@ export default function Home() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {featured.map((p, idx) => (
             <div key={p.slug} style={{ animationDelay: `${idx * 60}ms` }} className="animate-fade-up">
-              <ProductCard product={p} onBuy={setPaypalProduct} />
+              <ProductCard product={p} onBuy={setCheckoutProduct} />
             </div>
           ))}
         </div>
@@ -264,7 +264,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { n: "01", t: "Choose Your Keepsake", d: "Pick the product that fits your celebration. Customize the variant, the inscription, the moment." },
-              { n: "02", t: "Pay with PayPal", d: "Quick, secure checkout. We confirm your order within 24 hours and start production." },
+              { n: "02", t: "Pay securely with Stripe", d: "Quick, secure checkout. We confirm your order within 24 hours and start production." },
               { n: "03", t: "Relive It Forever", d: "Ships in 5–7 business days. Track your package. Open the box. Start the memory." },
             ].map((s, i) => (
               <div key={i} className="text-center">
@@ -292,7 +292,7 @@ export default function Home() {
           </h2>
           <p className="text-text-secondary text-lg mb-6 max-w-xl mx-auto">
             Browse the shop, find the keepsake that fits your celebration, and
-            check out with PayPal. Your forever memory is one click away.
+            check out securely with Stripe. Your forever memory is one click away.
           </p>
           <Link href="/products" className="btn-primary">
             Shop All Keepsakes →
@@ -300,10 +300,15 @@ export default function Home() {
         </div>
       </section>
 
-      {paypalProduct && (
-        <PayPalModal
-          product={paypalProduct}
-          onClose={() => setPaypalProduct(null)}
+      {checkoutProduct && (
+        <StripeCheckoutModal
+          emoji={checkoutProduct.emoji}
+          title={checkoutProduct.title}
+          priceDisplay={`$${checkoutProduct.price.toFixed(2)}`}
+          priceCaption="per unit"
+          checkoutNote={`Pick your ${Object.keys(checkoutProduct.variants).join(" and ").toLowerCase()} on the secure Stripe checkout page — your variants, email, and shipping address are all collected there.`}
+          stripeLink={checkoutProduct.stripeLink}
+          onClose={() => setCheckoutProduct(null)}
         />
       )}
     </main>

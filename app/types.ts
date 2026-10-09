@@ -13,7 +13,7 @@ export type Product = {
   };
   emoji: string;
   tag: string;
-  paypalBase: string;
+  stripeLink: string;
   variants: Record<string, string[]>;
   occasions: string[];
 };
@@ -47,6 +47,7 @@ export type Service = {
   shortDescription: string;
   longDescription: string;
   price: number;
+  stripeLink: string;
   whatYouGet: string[];
   bestFor: string;
 };

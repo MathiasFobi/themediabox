@@ -5,7 +5,7 @@ import products from "@/data/products.json";
 import type { Product, Collection } from "../types";
 import { CATEGORY_LABELS, OCCASION_GRADIENTS } from "../types";
 import { ProductCard } from "../components/ProductCard";
-import { PayPalModal } from "../components/PayPalModal";
+import { StripeCheckoutModal } from "../components/StripeCheckoutModal";
 
 const allProducts = products as unknown as Product[];
 
@@ -14,7 +14,7 @@ const CATEGORIES = Array.from(new Set(allProducts.map((p) => p.category)));
 export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
-  const [paypalProduct, setPaypalProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
   const toggleCategory = (c: string) => {
     setActiveCategories((prev) => {
@@ -48,14 +48,14 @@ export default function ProductsPage() {
         </div>
         <p className="text-text-secondary text-base sm:text-lg max-w-2xl">
           Every product is custom-made for your celebration. Pick a keepsake, customize
-          the variants, and check out with PayPal.
+          the variants, and check out securely with Stripe.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-text-muted">
           <span className="px-2.5 py-1 rounded-md border border-border-glass bg-bg-glass">
             {allProducts.length} keepsakes
           </span>
           <span className="px-2.5 py-1 rounded-md border border-border-glass bg-bg-glass">
-            PayPal checkout
+            Secure Stripe checkout
           </span>
           <span className="px-2.5 py-1 rounded-md border border-border-glass bg-bg-glass">
             Ships in 5–7 days
@@ -149,14 +149,22 @@ export default function ProductsPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((p, idx) => (
             <div key={p.slug} style={{ animationDelay: `${idx * 50}ms` }} className="animate-fade-up">
-              <ProductCard product={p} onBuy={setPaypalProduct} />
+              <ProductCard product={p} onBuy={setCheckoutProduct} />
             </div>
           ))}
         </div>
       )}
 
-      {paypalProduct && (
-        <PayPalModal product={paypalProduct} onClose={() => setPaypalProduct(null)} />
+      {checkoutProduct && (
+        <StripeCheckoutModal
+          emoji={checkoutProduct.emoji}
+          title={checkoutProduct.title}
+          priceDisplay={`$${checkoutProduct.price.toFixed(2)}`}
+          priceCaption="per unit"
+          checkoutNote={`Pick your ${Object.keys(checkoutProduct.variants).join(" and ").toLowerCase()} on the secure Stripe checkout page — your variants, email, and shipping address are all collected there.`}
+          stripeLink={checkoutProduct.stripeLink}
+          onClose={() => setCheckoutProduct(null)}
+        />
       )}
     </main>
   );

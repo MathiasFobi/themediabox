@@ -5,12 +5,12 @@ import Link from "next/link";
 import products from "@/data/products.json";
 import type { Product, Collection } from "../../types";
 import { ProductCard } from "../../components/ProductCard";
-import { PayPalModal } from "../../components/PayPalModal";
+import { StripeCheckoutModal } from "../../components/StripeCheckoutModal";
 
 const allProducts = products as unknown as Product[];
 
 export default function CollectionClient({ collection }: { collection: Collection }) {
-  const [paypalProduct, setPaypalProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
   const collectionProducts = useMemo(
     () =>
@@ -54,7 +54,7 @@ export default function CollectionClient({ collection }: { collection: Collectio
       <section className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {collectionProducts.map((p, idx) => (
           <div key={p.slug} style={{ animationDelay: `${idx * 60}ms` }} className="animate-fade-up">
-            <ProductCard product={p} onBuy={setPaypalProduct} />
+            <ProductCard product={p} onBuy={setCheckoutProduct} />
           </div>
         ))}
       </section>
@@ -72,8 +72,16 @@ export default function CollectionClient({ collection }: { collection: Collectio
         </a>
       </section>
 
-      {paypalProduct && (
-        <PayPalModal product={paypalProduct} onClose={() => setPaypalProduct(null)} />
+      {checkoutProduct && (
+        <StripeCheckoutModal
+          emoji={checkoutProduct.emoji}
+          title={checkoutProduct.title}
+          priceDisplay={`$${checkoutProduct.price.toFixed(2)}`}
+          priceCaption="per unit"
+          checkoutNote={`Pick your ${Object.keys(checkoutProduct.variants).join(" and ").toLowerCase()} on the secure Stripe checkout page — your variants, email, and shipping address are all collected there.`}
+          stripeLink={checkoutProduct.stripeLink}
+          onClose={() => setCheckoutProduct(null)}
+        />
       )}
     </main>
   );

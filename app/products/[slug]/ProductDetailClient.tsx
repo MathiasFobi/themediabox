@@ -6,13 +6,13 @@ import Link from "next/link";
 import type { Product } from "../../types";
 import { OCCASION_GRADIENTS } from "../../types";
 import { ProductCard } from "../../components/ProductCard";
-import { PayPalModal } from "../../components/PayPalModal";
+import { StripeCheckoutModal } from "../../components/StripeCheckoutModal";
 import products from "@/data/products.json";
 
 const allProducts = products as unknown as Product[];
 
 export default function ProductDetailClient({ product }: { product: Product }) {
-  const [paypalProduct, setPaypalProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
   const gallery = product.images
     ? [product.images.hero, product.images.product, product.images.lifestyle]
     : [product.image];
@@ -114,20 +114,20 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
           <button
             type="button"
-            onClick={() => setPaypalProduct(product)}
+            onClick={() => setCheckoutProduct(product)}
             className="btn-primary w-full justify-center text-base py-4 mb-3"
           >
-            Choose & Buy with PayPal →
+            Buy Now with Stripe →
           </button>
           <p className="text-text-muted text-xs text-center">
-            Opens a modal to pick your variants, quantity, and total. PayPal handles the rest.
+            Pick your variants and check out securely — Stripe handles the rest.
           </p>
 
           <div className="mt-10 space-y-3 text-sm">
             {[
               { label: "Custom-made to your celebration" },
               { label: "Ships in 5–7 business days" },
-              { label: "Secure PayPal checkout" },
+              { label: "Secure Stripe checkout" },
               { label: "Made in Atlanta, GA" },
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3 text-text-secondary">
@@ -146,14 +146,22 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {related.map((p) => (
-              <ProductCard key={p.slug} product={p} onBuy={setPaypalProduct} />
+              <ProductCard key={p.slug} product={p} onBuy={setCheckoutProduct} />
             ))}
           </div>
         </section>
       )}
 
-      {paypalProduct && (
-        <PayPalModal product={paypalProduct} onClose={() => setPaypalProduct(null)} />
+      {checkoutProduct && (
+        <StripeCheckoutModal
+          emoji={checkoutProduct.emoji}
+          title={checkoutProduct.title}
+          priceDisplay={`$${checkoutProduct.price.toFixed(2)}`}
+          priceCaption="per unit"
+          checkoutNote={`Pick your ${Object.keys(checkoutProduct.variants).join(" and ").toLowerCase()} on the secure Stripe checkout page — your variants, email, and shipping address are all collected there.`}
+          stripeLink={checkoutProduct.stripeLink}
+          onClose={() => setCheckoutProduct(null)}
+        />
       )}
     </main>
   );

@@ -13,7 +13,8 @@
       "4K resolution, ready to download",
       "Delivered in under 1 hour"
     ],
-    "bestFor": "LinkedIn, business cards, websites, speaker bios, dating apps"
+    "bestFor": "LinkedIn, business cards, websites, speaker bios, dating apps",
+    "stripeLink": "https://buy.stripe.com/test_bJecN5aRYfTb1Odcqo5Ne09"
   },
   {
     "slug": "dating-profile-photos",
@@ -29,7 +30,8 @@
       "Style guide: which photos lead with",
       "100% your face — just better"
     ],
-    "bestFor": "Hinge, Bumble, Tinder, Match, eHarmony, Bumble BFF"
+    "bestFor": "Hinge, Bumble, Tinder, Match, eHarmony, Bumble BFF",
+    "stripeLink": "https://buy.stripe.com/test_dRmdR91hobCV2Sh1LK5Ne0a"
   },
   {
     "slug": "linkedin-photos",
@@ -44,7 +46,8 @@
       "Business-casual and formal options",
       "Optimized for LinkedIn's display specs"
     ],
-    "bestFor": "LinkedIn, company about pages, conference bios"
+    "bestFor": "LinkedIn, company about pages, conference bios",
+    "stripeLink": "https://buy.stripe.com/test_bJe28r7FM8qJ8cBeyw5Ne0b"
   },
   {
     "slug": "wedding-outfits",
@@ -59,7 +62,8 @@
       "Skin-tone and undertone matched",
       "Shareable lookbook link"
     ],
-    "bestFor": "Brides, grooms, wedding party members"
+    "bestFor": "Brides, grooms, wedding party members",
+    "stripeLink": "https://buy.stripe.com/test_dRm8wP3pweP7akJ4XW5Ne0c"
   },
   {
     "slug": "graduation-photos",
@@ -74,7 +78,8 @@
       "Multiple campus and studio backgrounds",
       "Stole, hood, and regalia customization"
     ],
-    "bestFor": "High school, college, graduate school, professional school graduations"
+    "bestFor": "High school, college, graduate school, professional school graduations",
+    "stripeLink": "https://buy.stripe.com/test_4gM5kD9NUcGZ0K94XW5Ne0d"
   },
   {
     "slug": "travel-photos",
@@ -89,7 +94,8 @@
       "Different times of day, multiple poses",
       "Editorial-grade composition"
     ],
-    "bestFor": "Instagram, dating bios, vision boards, gifts"
+    "bestFor": "Instagram, dating bios, vision boards, gifts",
+    "stripeLink": "https://buy.stripe.com/test_9B63cv0dk22l0K93TS5Ne0e"
   },
   {
     "slug": "baby-photos",
@@ -104,7 +110,8 @@
       "Text overlay support for announcements",
       "Family-inclusive options"
     ],
-    "bestFor": "Pregnancy announcements, milestone photos, birth announcements, first birthday"
+    "bestFor": "Pregnancy announcements, milestone photos, birth announcements, first birthday",
+    "stripeLink": "https://buy.stripe.com/test_aFa28rf8e5ex3Wl9ec5Ne0f"
   },
   {
     "slug": "family-portraits",
@@ -119,7 +126,8 @@
       "Multiple settings and outfits",
       "Multi-generation support"
     ],
-    "bestFor": "Holiday cards, anniversary photos, family reunions, mantles"
+    "bestFor": "Holiday cards, anniversary photos, family reunions, mantles",
+    "stripeLink": "https://buy.stripe.com/test_00w4gze4a8qJ3Wl9ec5Ne0g"
   },
   {
     "slug": "cartoon-versions",
@@ -134,7 +142,8 @@
       "Custom outfits and props",
       "Print-ready high resolution"
     ],
-    "bestFor": "Profile pictures, gifts, prints, social media"
+    "bestFor": "Profile pictures, gifts, prints, social media",
+    "stripeLink": "https://buy.stripe.com/test_cNi6oH1ho0Yh9gFfCA5Ne0h"
   },
   {
     "slug": "pixar-style",
@@ -150,7 +159,8 @@
       "Multiple expressions and scenes",
       "Pixar-grade color and lighting"
     ],
-    "bestFor": "Profile pictures, family gifts, prints, social media"
+    "bestFor": "Profile pictures, family gifts, prints, social media",
+    "stripeLink": "https://buy.stripe.com/test_dRm7sL5xE0Yh0K99ec5Ne0i"
   },
   {
     "slug": "anime-style",
@@ -165,7 +175,8 @@
       "Custom character design",
       "High-detail illustration style"
     ],
-    "bestFor": "Profile pictures, social media, fan art vibes, gifts"
+    "bestFor": "Profile pictures, social media, fan art vibes, gifts",
+    "stripeLink": "https://buy.stripe.com/test_4gM6oH1ho8qJfF3gGE5Ne0j"
   },
   {
     "slug": "ghibli-style",
@@ -181,7 +192,8 @@
       "Magical and pastoral settings",
       "Character-rich compositions"
     ],
-    "bestFor": "Gifts, prints, profile pictures, art lovers"
+    "bestFor": "Gifts, prints, profile pictures, art lovers",
+    "stripeLink": "https://buy.stripe.com/test_6oU28raRYgXf64t1LK5Ne0k"
   },
   {
     "slug": "african-traditional-attire",
@@ -197,7 +209,8 @@
       "Occasion-specific looks (wedding, festival, ceremony)",
       "Cultural detail and authenticity"
     ],
-    "bestFor": "Traditional weddings, cultural events, heritage celebrations, photoshoots"
+    "bestFor": "Traditional weddings, cultural events, heritage celebrations, photoshoots",
+    "stripeLink": "https://buy.stripe.com/test_00wfZhgci36p78x6205Ne0l"
   },
   {
     "slug": "couple-photos",
@@ -212,7 +225,8 @@
       "Engagement and wedding options",
       "Print and digital formats"
     ],
-    "bestFor": "Anniversaries, engagements, social media, gifts, dating profiles (as a couple)"
+    "bestFor": "Anniversaries, engagements, social media, gifts, dating profiles (as a couple)",
+    "stripeLink": "https://buy.stripe.com/test_28E00j1hoeP79gFgGE5Ne0m"
   },
   {
     "slug": "christmas-cards",
@@ -227,7 +241,8 @@
       "Custom text overlay",
       "Print-ready and digital formats"
     ],
-    "bestFor": "Christmas cards, Kwanzaa cards, New Year cards, holiday gifts"
+    "bestFor": "Christmas cards, Kwanzaa cards, New Year cards, holiday gifts",
+    "stripeLink": "https://buy.stripe.com/test_28E6oH0dk36p8cBeyw5Ne0n"
   },
   {
     "slug": "birthday-invitations",
@@ -242,6 +257,7 @@
       "Custom text and event details",
       "Print and digital formats"
     ],
-    "bestFor": "Birthday parties, milestone birthdays, sweet 16s, quinceañeras"
+    "bestFor": "Birthday parties, milestone birthdays, sweet 16s, quinceañeras",
+    "stripeLink": "https://buy.stripe.com/test_6oU6oHgci22l64t1LK5Ne0o"
   }
 ]

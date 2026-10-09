@@ -14,7 +14,6 @@
     },
     "emoji": "🎥",
     "tag": "Best Seller",
-    "paypalBase": "https://paypal.me/themediabox/25",
     "variants": {
       "Celebration Type": [
         "Wedding",
@@ -26,9 +25,26 @@
         "Retirement",
         "Kwanzaa"
       ],
-      "Quantity": ["5 Pack", "10 Pack", "25 Pack", "50 Pack", "75 Pack", "100 Pack"]
+      "Quantity": [
+        "5 Pack",
+        "10 Pack",
+        "25 Pack",
+        "50 Pack",
+        "75 Pack",
+        "100 Pack"
+      ]
     },
-    "occasions": ["weddings", "graduations", "birthdays", "quinceaneras", "baby-showers", "retirements", "kwanzaa", "family-reunions"]
+    "occasions": [
+      "weddings",
+      "graduations",
+      "birthdays",
+      "quinceaneras",
+      "baby-showers",
+      "retirements",
+      "kwanzaa",
+      "family-reunions"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_28EfZh2ls6iBgJ7fCA5Ne01"
   },
   {
     "slug": "forever-voice-magnet",
@@ -45,11 +61,22 @@
     },
     "emoji": "🎙️",
     "tag": "Heirloom",
-    "paypalBase": "https://paypal.me/themediabox/32.95",
     "variants": {
-      "Style": ["Memorial", "Family History", "Grandparents", "Wedding Vows", "Baby's First Words"]
+      "Style": [
+        "Memorial",
+        "Family History",
+        "Grandparents",
+        "Wedding Vows",
+        "Baby's First Words"
+      ]
     },
-    "occasions": ["weddings", "retirements", "family-reunions", "kwanzaa"]
+    "occasions": [
+      "weddings",
+      "retirements",
+      "family-reunions",
+      "kwanzaa"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_fZufZh1hocGZgJ7cqo5Ne02"
   },
   {
     "slug": "custom-photo-booth-props",
@@ -66,11 +93,24 @@
     },
     "emoji": "📸",
     "tag": "Crowd Favorite",
-    "paypalBase": "https://paypal.me/themediabox/49.75",
     "variants": {
-      "Theme": ["Birthday", "Wedding", "Graduation", "Quinceanera", "Baby Shower", "Custom"]
+      "Theme": [
+        "Birthday",
+        "Wedding",
+        "Graduation",
+        "Quinceanera",
+        "Baby Shower",
+        "Custom"
+      ]
     },
-    "occasions": ["birthdays", "weddings", "graduations", "quinceaneras", "baby-showers"]
+    "occasions": [
+      "birthdays",
+      "weddings",
+      "graduations",
+      "quinceaneras",
+      "baby-showers"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_eVq28rbW2bCV2Shbmk5Ne03"
   },
   {
     "slug": "custom-birthday-props",
@@ -87,11 +127,23 @@
     },
     "emoji": "🎂",
     "tag": "Personal",
-    "paypalBase": "https://paypal.me/themediabox/49.75",
     "variants": {
-      "Age Range": ["Sweet 16", "18", "21", "30", "40", "50", "60", "70+", "Custom"]
+      "Age Range": [
+        "Sweet 16",
+        "18",
+        "21",
+        "30",
+        "40",
+        "50",
+        "60",
+        "70+",
+        "Custom"
+      ]
     },
-    "occasions": ["birthdays"]
+    "occasions": [
+      "birthdays"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_fZu5kD4tAfTbakJaig5Ne04"
   },
   {
     "slug": "graduation-frame-standee",
@@ -108,11 +160,16 @@
     },
     "emoji": "🎓",
     "tag": "Milestone",
-    "paypalBase": "https://paypal.me/themediabox/35",
     "variants": {
-      "Size": ["Tabletop", "Life-size (5ft)"]
+      "Size": [
+        "Tabletop",
+        "Life-size (5ft)"
+      ]
     },
-    "occasions": ["graduations"]
+    "occasions": [
+      "graduations"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_4gM6oH0dk0Yh8cBdus5Ne05"
   },
   {
     "slug": "wedding-memory-album",
@@ -129,11 +186,17 @@
     },
     "emoji": "📖",
     "tag": "Heirloom",
-    "paypalBase": "https://paypal.me/themediabox/75",
     "variants": {
-      "Pages": ["30 Pages", "50 Pages", "80 Pages"]
+      "Pages": [
+        "30 Pages",
+        "50 Pages",
+        "80 Pages"
+      ]
     },
-    "occasions": ["weddings"]
+    "occasions": [
+      "weddings"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_8x23cvd060Yh8cBgGE5Ne06"
   },
   {
     "slug": "kente-keepsake-box",
@@ -150,11 +213,23 @@
     },
     "emoji": "👑",
     "tag": "Heritage",
-    "paypalBase": "https://paypal.me/themediabox/55",
     "variants": {
-      "Inscription": ["Wedding", "Graduation", "Quinceanera", "Memorial", "Custom"]
+      "Inscription": [
+        "Wedding",
+        "Graduation",
+        "Quinceanera",
+        "Memorial",
+        "Custom"
+      ]
     },
-    "occasions": ["weddings", "graduations", "quinceaneras", "kwanzaa", "family-reunions"]
+    "occasions": [
+      "weddings",
+      "graduations",
+      "quinceaneras",
+      "kwanzaa",
+      "family-reunions"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_9B63cv3pwbCVgJ7bmk5Ne07"
   },
   {
     "slug": "quinceanera-memory-chest",
@@ -171,10 +246,17 @@
     },
     "emoji": "💎",
     "tag": "Once in a Lifetime",
-    "paypalBase": "https://paypal.me/themediabox/95",
     "variants": {
-      "Finish": ["Gold", "Silver", "Rose Gold", "Natural Wood"]
+      "Finish": [
+        "Gold",
+        "Silver",
+        "Rose Gold",
+        "Natural Wood"
+      ]
     },
-    "occasions": ["quinceaneras"]
+    "occasions": [
+      "quinceaneras"
+    ],
+    "stripeLink": "https://buy.stripe.com/test_28EfZhgci6iBfF32PO5Ne08"
   }
 ]
