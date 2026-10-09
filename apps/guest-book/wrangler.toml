@@ -13,10 +13,13 @@ binding = "ASSETS"
 # The CF account ID is baked in here; the API token is set via:
 #   wrangler secret put CLOUDFLARE_STREAM_TOKEN
 # We also set CF_ACCOUNT_ID as a non-secret var (public, low-sensitivity).
+#
+# OWNER_EMAIL (the super-admin login) must NOT be committed here — this repo
+# is public. Set it as a secret instead:
+#   wrangler secret put OWNER_EMAIL
 
 [vars]
 CF_ACCOUNT_ID = "8f22679e3ed18ec29e74afdbb45c9c9d"
-OWNER_EMAIL = "fobimathias@gmail.com"
 APP_URL = "http://localhost:8787"
 MAX_RECORDING_SECONDS = "180"
 MAX_UPLOAD_BYTES = "524288000"  # 500 MB

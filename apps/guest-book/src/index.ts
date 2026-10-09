@@ -104,60 +104,28 @@ function generateClaimCode(): string {
 }
 
 /**
- * Resolve an admin-supplied guest id to its event-scoped Firestore doc id,
- * enforcing that per-event hosts can only touch their OWN event's entries.
- *
- * The admin UI passes the short id (e.g. "P_j28P68uJPrjRbY"), in which case we
- * prepend `{eventSlug}__`. If a caller passes an already-prefixed id
- * ("{slug}__{short}"), the prefix MUST match their event — otherwise a host
- * of event A could approve/delete entries of event B. The super-admin
- * (isSuperAdmin) may use any id.
+ * Build the event-scoped Firestore doc id. The admin URL uses just the
+ * short id (e.g. "P_j28P68uJPrjRbY") because the client doesn't know the
+ * full prefixed form. We accept either:
+ *   - the short id, in which case we prepend `{eventSlug}__` if provided
+ *   - the full id (already prefixed), in which case we leave it alone
  */
-function scopedModId(
-  rawId: string,
-  ctx: { eventSlug: string; isSuperAdmin: boolean }
-): string {
-  const sep = rawId.indexOf("__");
-  if (sep >= 0) {
-    const prefix = rawId.slice(0, sep);
-    if (!ctx.isSuperAdmin && prefix !== ctx.eventSlug) {
-      throw err("Not a host of this event", 403);
-    }
-    return rawId;
-  }
-  if (!ctx.eventSlug) return rawId; // super-admin without slug context (legacy v1)
-  return `${ctx.eventSlug}__${rawId}`;
+function scopedId(shortId: string, eventSlug: string | undefined): string {
+  if (shortId.includes("__")) return shortId; // already event-scoped
+  if (!eventSlug) return shortId;             // no slug → use as-is (legacy v1)
+  return `${eventSlug}__${shortId}`;
 }
 
 /**
- * Public-safe event shape — never expose hostEmails or claim codes.
- * (Leaked claim codes let anyone self-promote to event host.)
+ * The global super-admin email. Set via `wrangler secret put OWNER_EMAIL`
+ * (it must NOT live in wrangler.toml vars — this repo is public).
+ * Fails closed with a 500 if unset so a misconfigured deploy can't
+ * accidentally treat everyone (or no one) as owner.
  */
-function publicEvent(e: Event) {
-  const { hostEmails: _hostEmails, claimCodes: _claimCodes, ...pub } = e;
-  return pub;
-}
-
-/**
- * Public-safe guest shape — the feed must not leak the guest's email,
- * the moderator's identity, or the (private) reject reason.
- */
-function publicGuest(g: GuestBook) {
-  return {
-    id: g.id,
-    eventSlug: g.eventSlug,
-    name: g.name,
-    toWhom: g.toWhom,
-    occasion: g.occasion,
-    message: g.message,
-    streamUid: g.streamUid,
-    streamPlaybackUrl: g.streamPlaybackUrl,
-    streamThumbnailUrl: g.streamThumbnailUrl,
-    streamWatchUrl: g.streamWatchUrl,
-    durationSeconds: g.durationSeconds,
-    status: g.status,
-    createdAt: g.createdAt,
-  };
+function ownerEmail(env: Env): string {
+  const v = (env.OWNER_EMAIL ?? "").trim().toLowerCase();
+  if (!v) throw err("Server misconfigured: OWNER_EMAIL not set", 500);
+  return v;
 }
 
 /**
@@ -169,7 +137,7 @@ async function requireOwner(req: Request, env: Env): Promise<string> {
   if (!token) throw err("Missing auth token", 401);
   const claims = await verifyFirebaseIdToken(token, PROJECT_ID);
   if (!claims.email_verified) throw err("Email not verified", 403);
-  if (claims.email.toLowerCase() !== env.OWNER_EMAIL.toLowerCase()) {
+  if (claims.email.toLowerCase() !== ownerEmail(env)) {
     throw err("Not authorized", 403);
   }
   return claims.email;
@@ -188,7 +156,7 @@ async function requireEventHost(
   req: Request,
   env: Env,
   slug?: string
-): Promise<{ email: string; eventSlug: string; isSuperAdmin: boolean }> {
+): Promise<{ email: string; eventSlug: string }> {
   const token = extractIdToken(req);
   if (!token) throw err("Missing auth token", 401);
   const claims = await verifyFirebaseIdToken(token, PROJECT_ID);
@@ -196,8 +164,8 @@ async function requireEventHost(
   const email = claims.email.toLowerCase();
 
   // Global super-admin can do anything
-  if (email === env.OWNER_EMAIL.toLowerCase()) {
-    return { email, eventSlug: slug ?? "", isSuperAdmin: true };
+  if (email === ownerEmail(env)) {
+    return { email, eventSlug: slug ?? "" };
   }
 
   // Otherwise we need an event to check membership against
@@ -207,7 +175,7 @@ async function requireEventHost(
   if (!event) throw err("Event not found", 404);
   const isHost = (event.hostEmails ?? []).some((e) => e.toLowerCase() === email);
   if (!isHost) throw err("Not a host of this event", 403);
-  return { email, eventSlug, isSuperAdmin: false };
+  return { email, eventSlug };
 }
 
 function withOwnerErrors<T>(fn: (c: import("hono").Context<{ Bindings: Env }>, email: string) => Promise<T>) {
@@ -225,10 +193,7 @@ function withOwnerErrors<T>(fn: (c: import("hono").Context<{ Bindings: Env }>, e
 }
 
 function withEventHostErrors<T>(
-  fn: (
-    c: import("hono").Context<{ Bindings: Env }>,
-    ctx: { email: string; eventSlug: string; isSuperAdmin: boolean }
-  ) => Promise<T>
+  fn: (c: import("hono").Context<{ Bindings: Env }>, ctx: { email: string; eventSlug: string }) => Promise<T>
 ) {
   return async (c: import("hono").Context<{ Bindings: Env }>) => {
     try {
@@ -400,42 +365,12 @@ app.post("/api/upload", async (c) => {
   }
 
   try {
-    // Stream the upload straight through to Cloudflare Stream as a
-    // manually-built multipart body. We MUST NOT buffer the video in
-    // isolate memory (Workers cap at 128 MB) — MAX_UPLOAD_BYTES allows up
-    // to 500 MB, so the bytes flow chunk-by-chunk instead.
-    const rawFilename = c.req.header("x-filename") ?? "recording.bin";
-    // Sanitize for the Content-Disposition header (no quotes/newlines).
-    const filename =
-      rawFilename.replace(/["\r\n]/g, "").slice(0, 120) || "recording.bin";
-    const upstream = c.req.raw.body;
-    if (!upstream) return err("Empty request body", 400);
-
-    const boundary = `----tmb${randomId()}${randomId()}`;
-    const enc = new TextEncoder();
-    const head = enc.encode(
-      `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
-        `Content-Type: ${contentType}\r\n\r\n`
-    );
-    const tail = enc.encode(`\r\n--${boundary}--\r\n`);
-    const body = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        controller.enqueue(head);
-        const reader = upstream.getReader();
-        try {
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value);
-          }
-        } finally {
-          reader.releaseLock();
-        }
-        controller.enqueue(tail);
-        controller.close();
-      },
-    });
+    // Build a fresh multipart/form-data request to Cloudflare Stream.
+    // We stream the body through; the body is the raw video bytes.
+    const filename = c.req.header("x-filename") ?? "recording.bin";
+    const body = await c.req.raw.arrayBuffer();
+    const form = new FormData();
+    form.set("file", new Blob([body], { type: contentType }), filename);
 
     const res = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${c.env.CF_ACCOUNT_ID}/stream`,
@@ -443,12 +378,9 @@ app.post("/api/upload", async (c) => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${c.env.CLOUDFLARE_STREAM_TOKEN}`,
-          "Content-Type": `multipart/form-data; boundary=${boundary}`,
         },
-        body,
-        // Required for streaming request bodies.
-        duplex: "half",
-      } as RequestInit
+        body: form,
+      }
     );
     if (!res.ok) {
       const text = await res.text();
@@ -523,7 +455,7 @@ app.get("/api/events", async (c) => {
   // List all events (public read; in v1.5 we just need the slug for routing)
   try {
     const events = await listEvents(c.env, PROJECT_ID, { useAdmin: true });
-    return json({ events: events.map(publicEvent) });
+    return json({ events });
   } catch (e) {
     return err(e instanceof Error ? e.message : "List failed", 500);
   }
@@ -534,7 +466,7 @@ app.get("/api/events/:slug", async (c) => {
   try {
     const event = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
     if (!event) return err("Not found", 404);
-    return json(publicEvent(event));
+    return json(event);
   } catch (e) {
     return err(e instanceof Error ? e.message : "Get failed", 500);
   }
@@ -646,7 +578,7 @@ app.get("/api/guests", async (c) => {
       limit,
       useAdmin: true,
     });
-    return json({ guests: rows.map(publicGuest) });
+    return json({ guests: rows });
   } catch (e) {
     console.error("firestore list error", e);
     return err(e instanceof Error ? e.message : "Firestore list failed", 500);
@@ -662,19 +594,14 @@ app.get("/api/guests/:id", async (c) => {
   try {
     const guest = await getGuest(c.env, PROJECT_ID, rawId, { useAdmin: true });
     if (!guest) return err("Not found", 404);
-    // Public read: approved entries, scoped to the requested event, get the
-    // public-safe shape (no emails, no moderation metadata). Anything else
-    // requires an event host; hosts see the full record.
-    let authed = false;
     if (guest.status !== "approved" || eventSlug !== c.req.query("eventSlug")) {
       try {
         await requireEventHost(c.req.raw, c.env, eventSlug);
-        authed = true;
       } catch {
         return err("Not found", 404);
       }
     }
-    return json(authed ? guest : publicGuest(guest));
+    return json(guest);
   } catch (e) {
     console.error("get guest error", e);
     return err(e instanceof Error ? e.message : "Read failed", 500);
@@ -753,7 +680,7 @@ app.put(
     const existing = await getEvent(c.env, PROJECT_ID, slug, { useAdmin: true });
     if (!existing) return err("Event not found", 404);
     // Authorization: must be a host of this event, OR the global super-admin
-    const isGlobalOwner = email.toLowerCase() === c.env.OWNER_EMAIL.toLowerCase();
+    const isGlobalOwner = email.toLowerCase() === ownerEmail(c.env);
     const isHost = (existing.hostEmails ?? []).some((e) => e.toLowerCase() === email.toLowerCase());
     if (!isGlobalOwner && !isHost) {
       return err("Not a host of this event", 403);
@@ -896,14 +823,14 @@ app.post("/api/events/:slug/claim", async (c) => {
 
 app.post(
   "/api/admin/guests/:id/approve",
-  withEventHostErrors(async (c, ctx) => {
-    const id = scopedModId(c.req.param("id")!, ctx);
+  withEventHostErrors(async (c, { email, eventSlug }) => {
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await updateGuestStatus(
       c.env,
       PROJECT_ID,
       id,
       "approved",
-      ctx.email,
+      email,
       undefined,
       { useAdmin: true }
     );
@@ -913,15 +840,15 @@ app.post(
 
 app.post(
   "/api/admin/guests/:id/reject",
-  withEventHostErrors(async (c, ctx) => {
-    const id = scopedModId(c.req.param("id")!, ctx);
+  withEventHostErrors(async (c, { email, eventSlug }) => {
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const body = (await c.req.json().catch(() => ({}))) as { reason?: string };
     const guest = await updateGuestStatus(
       c.env,
       PROJECT_ID,
       id,
       "rejected",
-      ctx.email,
+      email,
       body.reason?.trim().slice(0, 200),
       { useAdmin: true }
     );
@@ -931,8 +858,8 @@ app.post(
 
 app.delete(
   "/api/admin/guests/:id",
-  withEventHostErrors(async (c, ctx) => {
-    const id = scopedModId(c.req.param("id")!, ctx);
+  withEventHostErrors(async (c, { eventSlug }) => {
+    const id = scopedId(c.req.param("id")!, eventSlug);
     const guest = await getGuest(c.env, PROJECT_ID, id, { useAdmin: true });
     if (guest) {
       // Best-effort delete the Stream video too
