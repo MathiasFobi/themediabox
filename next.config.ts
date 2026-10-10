@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Static export for Vercel static hosting
-  output: "export",
-  // Required for static export: disable image optimization
+  // Dynamic hosting (Vercel): required for API routes
+  // (/api/stripe/webhook, /api/orders/*). The storefront is no longer a
+  // static export — deploy as a standard Next.js app.
   images: {
     unoptimized: true,
   },
