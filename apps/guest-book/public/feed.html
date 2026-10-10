@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="Approved video messages from loved ones, collected with TheMediaBox video guest book." />
 <title>Messages · TheMediaBox</title>
 <style>
   :root {
@@ -12,130 +13,204 @@
     --muted: #5a5a5a;
     --paper: #fbf7ef;
     --line: #e6dfd0;
+    --card: #ffffff;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(26, 26, 26, 0.06), 0 8px 24px rgba(26, 26, 26, 0.08);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: ui-serif, Georgia, "Times New Roman", serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
-  header { text-align: center; padding: 24px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; position: relative; }
-  header .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
-  header h1 { font-size: 40px; margin: 8px 0 4px; font-weight: 700; }
-  header p { color: var(--muted); margin: 0; font-size: 16px; }
-  header .header-actions { margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  header .header-actions a {
-    display: inline-block;
-    padding: 8px 18px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: #fff;
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  header .header-actions a.primary { background: var(--gold); color: #1a1a1a; border-color: var(--gold-deep); }
-  header .header-actions a.primary:hover { background: var(--gold-deep); color: #fff; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 20px 80px; }
 
-  .filter-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    align-items: center;
+  /* ── Header ─────────────────────────────── */
+  header.hero { text-align: center; padding: 28px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+  header.hero .eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold-deep); }
+  header.hero h1 { font-size: clamp(30px, 5vw, 44px); margin: 10px 0 6px; font-weight: 700; letter-spacing: -0.01em; }
+  header.hero p { color: var(--muted); margin: 0 auto; font-size: 16px; max-width: 560px; line-height: 1.5; }
+  .hero-cta { margin-top: 18px; }
+  .btn {
+    display: inline-block; padding: 11px 26px; border-radius: 999px;
+    background: var(--gold); color: #1a1a1a; font-weight: 700; font-size: 15px;
+    text-decoration: none; border: 1px solid var(--gold-deep);
+    font-family: inherit; cursor: pointer;
+    transition: transform 0.06s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   }
-  .filter-row label { font-size: 13px; color: var(--muted); font-weight: 600; }
-  .filter-row input, .filter-row select {
-    padding: 8px 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 14px;
-    background: #fff;
+  .btn:hover { background: var(--gold-deep); color: #fff; box-shadow: var(--shadow); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible, .card:focus-visible, .filter-row input:focus-visible, .filter-row select:focus-visible {
+    outline: 2px solid var(--gold-deep); outline-offset: 2px;
   }
-  .filter-row input { flex: 1; min-width: 200px; }
 
+  /* ── Sticky filter bar ──────────────────── */
+  .toolbar {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--paper);
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 0; margin: 0 -20px 8px; padding-left: 20px; padding-right: 20px;
+  }
+  .toolbar-inner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toolbar label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .toolbar input, .toolbar select {
+    padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+    font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink);
+  }
+  .toolbar input { flex: 1; min-width: 160px; }
+  .toolbar input::placeholder { color: #9a9384; }
+  .count { margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* ── Card grid ──────────────────────────── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px; padding-top: 20px;
   }
   .card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; text-decoration: none; color: inherit; display: block;
+    box-shadow: 0 1px 2px rgba(26,26,26,0.04);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    cursor: pointer; font-family: inherit; text-align: left; padding: 0; width: 100%;
   }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--line); }
-  .card .thumb { aspect-ratio: 9/16; background: #000; position: relative; }
-  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .card .thumb { aspect-ratio: 9/16; background: #0d0d0d; position: relative; overflow: hidden; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+  .card:hover .thumb img { transform: scale(1.04); }
   .card .thumb .play {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 56px; height: 56px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 50%;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 60px; height: 60px; background: rgba(0,0,0,0.55);
+    border: 1.5px solid rgba(255,255,255,0.85); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 22px;
-    pointer-events: none;
+    color: #fff; font-size: 20px; pointer-events: none;
+    transition: transform 0.15s ease, background 0.15s ease;
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
   }
-  .card .meta { padding: 12px 14px; }
-  .card .meta .name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
-  .card .meta .sub { font-size: 12px; color: var(--muted); }
+  .card:hover .thumb .play { transform: translate(-50%, -50%) scale(1.12); background: var(--gold-deep); border-color: var(--gold-deep); }
+  .card .thumb .duration {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.72); color: #fff; font-size: 11.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 6px; font-variant-numeric: tabular-nums;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .card .meta { padding: 14px 16px 16px; }
+  .card .meta .name { font-weight: 700; font-size: 16px; margin-bottom: 3px; }
+  .card .meta .sub { font-size: 12.5px; color: var(--muted); }
+  .card .meta .sub .dot { margin: 0 4px; opacity: 0.5; }
   .card .meta .msg {
-    font-size: 13px; color: var(--ink); margin-top: 8px;
-    font-style: italic;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+    font-size: 13.5px; color: var(--ink); margin-top: 10px; font-style: italic; line-height: 1.45;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
   }
+  .card .meta .when { display: block; margin-top: 10px; font-size: 11.5px; color: #9a9384; font-family: ui-sans-serif, system-ui, sans-serif; }
 
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
+  /* ── Skeleton loading ───────────────────── */
+  .skeleton { pointer-events: none; }
+  .skeleton .thumb { background: linear-gradient(100deg, #e9e2d2 40%, #f4eee0 50%, #e9e2d2 60%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+  .skeleton .bar { height: 13px; border-radius: 6px; margin: 10px 16px 0;
+    background: linear-gradient(100deg, #e9e2d2 40%, #f4eee0 50%, #e9e2d2 60%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+  .skeleton .bar.short { width: 55%; margin-bottom: 16px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ── Empty states ───────────────────────── */
+  .empty { text-align: center; padding: 72px 20px; color: var(--muted); grid-column: 1 / -1; }
+  .empty .crest {
+    width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 50%;
+    background: #fff; border: 1px solid var(--line); color: var(--gold-deep);
+    font-size: 30px; display: flex; align-items: center; justify-content: center;
   }
-  .empty .crest { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty h2 { color: var(--ink); font-size: 20px; margin: 0 0 8px; }
+  .empty p { margin: 0 0 18px; font-size: 14.5px; line-height: 1.55; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .empty a.cta-link { color: var(--gold-deep); font-weight: 700; }
 
-  .count { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  /* ── Lightbox ───────────────────────────── */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(12, 10, 6, 0.88);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .lightbox.open { opacity: 1; pointer-events: auto; }
+  .lightbox-dialog {
+    width: min(420px, 94vw); max-height: 92vh; overflow: hidden;
+    background: #111; border-radius: 18px; border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    transform: translateY(12px) scale(0.98); transition: transform 0.22s ease;
+    display: flex; flex-direction: column;
+  }
+  .lightbox.open .lightbox-dialog { transform: none; }
+  .lightbox-player { aspect-ratio: 9/16; background: #000; position: relative; }
+  .lightbox-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .lightbox-meta { padding: 14px 18px 16px; color: #f3ede0; background: #141210; }
+  .lightbox-meta .name { font-weight: 700; font-size: 16px; }
+  .lightbox-meta .sub { font-size: 13px; color: #b7ab90; margin-top: 2px; }
+  .lightbox-meta .msg { font-size: 13.5px; font-style: italic; color: #d9cfb8; margin-top: 8px; line-height: 1.5; }
+  .lightbox-close {
+    position: absolute; top: 14px; right: 14px; z-index: 2;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    font-size: 18px; cursor: pointer; font-family: inherit; line-height: 1;
+  }
+  .lightbox-close:hover { background: rgba(0,0,0,0.85); }
+  .lightbox-wrap { position: relative; }
 
   footer {
-    text-align: center;
-    padding: 32px 0 16px;
-    color: var(--muted);
-    font-size: 13px;
-    border-top: 1px solid var(--line);
-    margin-top: 48px;
+    text-align: center; padding: 32px 0 16px; color: var(--muted);
+    font-size: 13px; border-top: 1px solid var(--line); margin-top: 56px;
   }
   footer a { color: var(--gold-deep); font-weight: 600; text-decoration: none; }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .card .meta { padding: 10px 12px 12px; }
+    .card .meta .name { font-size: 14px; }
+    .count { width: 100%; margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .card .thumb img, .card .thumb .play, .btn, .lightbox, .lightbox-dialog { transition: none; animation: none; }
+    .skeleton .thumb, .skeleton .bar { animation: none; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <header>
+  <header class="hero">
     <div class="eyebrow">✦ TheMediaBox</div>
     <h1 id="event-name">Messages</h1>
-    <p id="event-sub">Approved messages from loved ones</p>
-    <div class="header-actions">
-      <a class="primary" id="record-link" href="/">✦ Record a message</a>
+    <p id="event-sub">Approved video messages from loved ones.</p>
+    <div class="hero-cta">
+      <a class="btn" id="record-link" href="/">✦ Record a message</a>
     </div>
   </header>
 
-  <div class="filter-row">
-    <label for="filter-name">Filter by name:</label>
-    <input id="filter-name" type="search" placeholder="e.g. Maya" />
-    <label for="filter-occasion">Occasion:</label>
-    <select id="filter-occasion">
-      <option value="">All occasions</option>
-    </select>
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <label for="filter-name">Search</label>
+      <input id="filter-name" type="search" placeholder="Name…" autocomplete="off" />
+      <label for="filter-occasion">Occasion</label>
+      <select id="filter-occasion">
+        <option value="">All</option>
+      </select>
+      <span class="count" id="count" role="status" aria-live="polite">Loading…</span>
+    </div>
   </div>
 
-  <p class="count" id="count">Loading…</p>
-  <div class="grid" id="grid"></div>
+  <div class="grid" id="grid" aria-live="polite"></div>
 </main>
+
+<!-- Video lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Video message player">
+  <div class="lightbox-wrap">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close player">✕</button>
+    <div class="lightbox-dialog">
+      <div class="lightbox-player"><iframe id="lightbox-iframe" title="Video message" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+      <div class="lightbox-meta">
+        <div class="name" id="lightbox-name"></div>
+        <div class="sub" id="lightbox-sub"></div>
+        <div class="msg" id="lightbox-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer>
   <p>More features coming soon → <a href="https://themediabox.vercel.app" target="_blank" rel="noopener">themediabox.vercel.app</a></p>
@@ -143,73 +218,147 @@
 
 <script>
 (() => {
+  "use strict";
+
+  /* ── Input handling: resolve the event slug ── */
   const qs = new URLSearchParams(location.search);
   let slug = qs.get("slug");
   if (!slug) {
     const m = location.pathname.match(/^\/([a-z0-9-]{1,50})\/feed/);
     if (m && m[1] !== "feed") slug = m[1];
   }
-  if (!slug) {
-    // Fall back to "default" — single-event bootstrap
-    slug = "default";
-  }
+  if (!slug || !/^[a-z0-9-]{1,50}$/.test(slug)) slug = "default";
 
-  // Set the "Record a message" link to point at the form
   const recordLink = document.getElementById("record-link");
   if (recordLink) recordLink.href = `/${encodeURIComponent(slug)}`;
 
-  let allGuests = [];
-
-  async function load() {
-    // 1) Load event for branding
-    try {
-      const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
-      if (res.ok) {
-        const ev = await res.json();
-        const h1 = document.getElementById("event-name");
-        if (h1) h1.textContent = ev.name || "Messages";
-        const sub = document.getElementById("event-sub");
-        if (sub) sub.textContent = ev.welcomeMessage || "Approved messages from loved ones";
-        if (ev.themeColor) {
-          document.documentElement.style.setProperty("--gold", ev.themeColor);
-          document.documentElement.style.setProperty("--gold-deep", shadeColor(ev.themeColor, -20));
-        }
-        document.title = `${ev.name} · Messages`;
-      } else if (res.status === 404) {
-        document.getElementById("count").textContent = "Event not found.";
-        return;
-      }
-    } catch (e) {
-      console.warn("event load failed", e);
-    }
-
-    // 2) Load approved guests
-    try {
-      const res = await fetch(`/api/guests?eventSlug=${encodeURIComponent(slug)}&status=approved&limit=200`);
-      if (!res.ok) {
-        document.getElementById("count").textContent = "Couldn't load messages.";
-        return;
-      }
-      const data = await res.json();
-      allGuests = data.guests || [];
-      populateOccasionFilter(allGuests);
-      render();
-    } catch (e) {
-      document.getElementById("count").textContent = "Couldn't load messages.";
-    }
+  /* ── Security helpers ───────────────────────
+     All API-supplied strings are treated as untrusted:
+     - text → escapeHtml before innerHTML
+     - urls  → safeUrl (https only) before href/src
+     - theme color → strict hex validation
+     - stream uid → strict id validation before building the embed URL
+  */
+  const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ESCAPES[c]);
+  }
+  function safeUrl(u) {
+    if (typeof u !== "string") return null;
+    const t = u.trim();
+    // Only absolute https URLs — blocks javascript:, data:, and relative-URL tricks.
+    if (!/^https:\/\/[^\/\s]+\/\S*$/i.test(t)) return null;
+    return t;
+  }
+  function safeHex(c) {
+    return typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c.trim()) ? c.trim() : null;
+  }
+  function safeUid(u) {
+    // Cloudflare Stream UIDs are lowercase hex.
+    return typeof u === "string" && /^[0-9a-f]{32}$/.test(u) ? u : null;
   }
 
-  function populateOccasionFilter(guests) {
-    const sel = document.getElementById("filter-occasion");
-    const occasions = Array.from(
-      new Set(guests.map((g) => g.occasion).filter(Boolean))
-    ).sort();
-    for (const o of occasions) {
-      const opt = document.createElement("option");
-      opt.value = o;
-      opt.textContent = o;
-      sel.appendChild(opt);
+  /* ── Formatting helpers ── */
+  function fmtDuration(sec) {
+    const s = Math.max(0, Math.floor(Number(sec) || 0));
+    const m = Math.floor(s / 60);
+    return `${m}:${String(s % 60).padStart(2, "0")}`;
+  }
+  function timeAgo(iso) {
+    const t = Date.parse(iso);
+    if (Number.isNaN(t)) return "";
+    const diff = Date.now() - t;
+    if (diff < 0) return "";
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "just now";
+    if (min < 60) return `${min}m ago`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    if (d < 30) return `${d}d ago`;
+    return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  /* ── State ── */
+  let allGuests = [];
+  const grid = document.getElementById("grid");
+  const countEl = document.getElementById("count");
+
+  // Skeleton placeholders while loading
+  grid.innerHTML = Array.from({ length: 8 }, () => `
+    <div class="card skeleton" aria-hidden="true">
+      <div class="thumb"></div>
+      <div class="bar"></div>
+      <div class="bar short"></div>
+    </div>`).join("");
+
+  /* ── Lightbox ── */
+  const lightbox = document.getElementById("lightbox");
+  const lbIframe = document.getElementById("lightbox-iframe");
+  const lbName = document.getElementById("lightbox-name");
+  const lbSub = document.getElementById("lightbox-sub");
+  const lbMsg = document.getElementById("lightbox-msg");
+  let lastFocus = null;
+
+  function openLightbox(g) {
+    const uid = safeUid(g.streamUid);
+    if (!uid) {
+      // No embeddable video — fall back to the watch URL if it's safe.
+      const watch = safeUrl(g.streamWatchUrl) || safeUrl(g.streamPlaybackUrl);
+      if (watch) window.open(watch, "_blank", "noopener");
+      return;
     }
+    lastFocus = document.activeElement;
+    lbIframe.src = `https://iframe.videodelivery.net/${uid}`;
+    lbName.textContent = g.name || "A loved one";
+    lbSub.textContent = [g.toWhom ? `→ ${g.toWhom}` : "", g.occasion || ""].filter(Boolean).join(" · ");
+    lbMsg.textContent = g.message ? `“${g.message}”` : "";
+    lbMsg.style.display = g.message ? "" : "none";
+    lightbox.classList.add("open");
+    document.body.style.overflow = "hidden";
+    document.getElementById("lightbox-close").focus();
+  }
+  function closeLightbox() {
+    lightbox.classList.remove("open");
+    lbIframe.src = "about:blank"; // stop playback
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.getElementById("lightbox-close").addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", (e) => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && lightbox.classList.contains("open")) closeLightbox();
+  });
+
+  /* ── Render ── */
+  function cardHtml(g) {
+    const thumb = safeUrl(g.streamThumbnailUrl);
+    const dur = g.durationSeconds != null ? `<div class="duration">${escapeHtml(fmtDuration(g.durationSeconds))}</div>` : "";
+    const when = timeAgo(g.createdAt);
+    return `
+      <button class="card">
+        <div class="thumb">
+          ${thumb ? `<img src="${thumb}" alt="" loading="lazy" />` : ""}
+          <div class="play" aria-hidden="true">▶</div>
+          ${dur}
+        </div>
+        <div class="meta">
+          <div class="name">${escapeHtml(g.name)}</div>
+          <div class="sub">→ ${escapeHtml(g.toWhom)}<span class="dot">·</span>${escapeHtml(g.occasion)}</div>
+          ${g.message ? `<div class="msg">“${escapeHtml(g.message)}”</div>` : ""}
+          ${when ? `<span class="when">${escapeHtml(when)}</span>` : ""}
+        </div>
+      </button>`;
+  }
+
+  function emptyHtml(title, body, cta) {
+    return `
+      <div class="empty">
+        <div class="crest">✦</div>
+        <h2>${title}</h2>
+        <p>${body}</p>
+        ${cta || ""}
+      </div>`;
   }
 
   function render() {
@@ -218,63 +367,97 @@
     let filtered = allGuests;
     if (nameQ) {
       filtered = filtered.filter((g) =>
-        (g.name || "").toLowerCase().includes(nameQ) ||
-        (g.toWhom || "").toLowerCase().includes(nameQ)
+        String(g.name || "").toLowerCase().includes(nameQ) ||
+        String(g.toWhom || "").toLowerCase().includes(nameQ)
       );
     }
-    if (occQ) {
-      filtered = filtered.filter((g) => g.occasion === occQ);
-    }
+    if (occQ) filtered = filtered.filter((g) => g.occasion === occQ);
 
-    const count = document.getElementById("count");
     if (!allGuests.length) {
-      count.textContent = "No approved messages yet. Check back soon!";
-      document.getElementById("grid").innerHTML = `
-        <div class="empty" style="grid-column: 1 / -1;">
-          <div class="crest">✦</div>
-          <p>Be the first to <a href="/${encodeURIComponent(slug)}" style="color: var(--gold-deep); font-weight: 600;">leave a message</a>.</p>
-        </div>`;
+      countEl.textContent = "";
+      grid.innerHTML = emptyHtml(
+        "No messages yet",
+        "Approved video messages will appear here. Be the first to make this event unforgettable.",
+        `<a class="btn" href="/${encodeURIComponent(slug)}">✦ Record the first message</a>`
+      );
       return;
     }
-    const filtered_count = filtered.length;
-    count.textContent = filtered_count === allGuests.length
+    countEl.textContent = filtered.length === allGuests.length
       ? `${allGuests.length} ${allGuests.length === 1 ? "message" : "messages"}`
-      : `${filtered_count} of ${allGuests.length} messages`;
+      : `${filtered.length} of ${allGuests.length} messages`;
 
-    const grid = document.getElementById("grid");
-    if (!filtered_count) {
-      grid.innerHTML = `<div class="empty" style="grid-column: 1 / -1;"><div class="crest">∅</div><p>No matches. Try a different filter.</p></div>`;
+    if (!filtered.length) {
+      grid.innerHTML = emptyHtml(
+        "No matches",
+        "Nothing matches those filters. Try a different name or occasion.",
+        ""
+      );
       return;
     }
-    grid.innerHTML = filtered.map((g) => `
-      <a class="card" href="${g.streamWatchUrl || g.streamPlaybackUrl || '#'}" target="_blank" rel="noopener" data-id="${g.id}">
-        <div class="thumb">
-          <img src="${g.streamThumbnailUrl || ''}" alt="" loading="lazy" />
-          <div class="play">▶</div>
-        </div>
-        <div class="meta">
-          <div class="name">${escapeHtml(g.name)}</div>
-          <div class="sub">→ ${escapeHtml(g.toWhom)} · ${escapeHtml(g.occasion)}</div>
-          ${g.message ? `<div class="msg">"${escapeHtml(g.message)}"</div>` : ""}
-        </div>
-      </a>
-    `).join("");
+    grid.innerHTML = filtered.map(cardHtml).join("");
+    grid.querySelectorAll(".card").forEach((el, i) => {
+      el.addEventListener("click", () => openLightbox(filtered[i]));
+    });
   }
 
-  document.getElementById("filter-name").addEventListener("input", render);
-  document.getElementById("filter-occasion").addEventListener("change", render);
+  function populateOccasionFilter(guests) {
+    const sel = document.getElementById("filter-occasion");
+    const occasions = Array.from(new Set(guests.map((g) => g.occasion).filter(Boolean))).sort();
+    for (const o of occasions) {
+      const opt = document.createElement("option");
+      opt.value = o;
+      opt.textContent = o; // textContent: no HTML injection
+      sel.appendChild(opt);
+    }
+  }
 
-  function escapeHtml(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  /* ── Load ── */
+  async function load() {
+    try {
+      const res = await fetch(`/api/events/${encodeURIComponent(slug)}`);
+      if (res.ok) {
+        const ev = await res.json();
+        document.getElementById("event-name").textContent = ev.name || "Messages";
+        document.getElementById("event-sub").textContent = ev.welcomeMessage || "Approved video messages from loved ones.";
+        const theme = safeHex(ev.themeColor);
+        if (theme) {
+          document.documentElement.style.setProperty("--gold", theme);
+          document.documentElement.style.setProperty("--gold-deep", shadeColor(theme, -24));
+        }
+        if (typeof ev.name === "string" && ev.name) document.title = `${ev.name} · Messages`;
+      } else if (res.status === 404) {
+        countEl.textContent = "";
+        grid.innerHTML = emptyHtml("Event not found", "This gallery link doesn't match an event. Check the URL and try again.", "");
+        return;
+      }
+    } catch (e) {
+      console.warn("event load failed", e);
+    }
+
+    try {
+      const res = await fetch(`/api/guests?eventSlug=${encodeURIComponent(slug)}&status=approved&limit=200`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      allGuests = Array.isArray(data.guests) ? data.guests : [];
+      populateOccasionFilter(allGuests);
+      render();
+    } catch (e) {
+      console.warn("guest load failed", e);
+      countEl.textContent = "";
+      grid.innerHTML = emptyHtml("Couldn't load messages", "Something went wrong fetching the gallery. Please reload the page.", "");
+    }
   }
 
   function shadeColor(hex, percent) {
-    const num = parseInt(hex.replace("#", ""), 16);
+    const num = parseInt(hex.slice(1), 16);
     const r = Math.max(0, Math.min(255, (num >> 16) + percent));
     const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
     const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
     return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
   }
+
+  document.getElementById("filter-name").addEventListener("input", render);
+  document.getElementById("filter-occasion").addEventListener("change", render);
 
   load();
 })();
